@@ -1,3 +1,2 @@
 # bhh-tools
-riftbound-inventory.html
-riftbound-converter-v4.1.html
+MasterCSV-ShopifyCSV_V1.0.html
