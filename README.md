@@ -1,4 +1,4 @@
 # bhh-tools
-MasterCSV-ShopifyCSV_V1.0.html
+MasterCSV-ShopifyCSV_V2.0.html
 
-CollectrCSV-ShopifyInventoryCSV_V1.0.html
+CollectrCSV-ShopifyInventoryCSV_V2.0.html
