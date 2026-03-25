@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Van Isle Collectables — Product Import Tool</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:         #f5f4f0;
+  --surface:    #ffffff;
+  --surface2:   #f0ede8;
+  --border:     #dedad3;
+  --border2:    #c8c4bb;
+  --green:      #2d6a4f;
+  --green-dark: #1e4d38;
+  --green-lt:   #eaf3ee;
+  --green-mid:  #3d8a65;
+  --gold:       #b8860b;
+  --gold-lt:    #fdf8ec;
+  --gold-mid:   #d4a017;
+  --gold-dark:  #8a6408;
+  --text:       #1c1c2a;
+  --text-mid:   #52525f;
+  --text-dim:   #95939e;
+  --success:    #276c47;
+  --success-bg: #eaf4ee;
+  --warn:       #996000;
+  --warn-bg:    #fff8e6;
+  --error:      #b83030;
+  --error-bg:   #fdecea;
+  --info:       #1a5a9a;
+  --info-bg:    #e8f1fb;
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.07);
+  --shadow:     0 4px 16px rgba(0,0,0,0.09);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.11);
+  --radius:     8px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Subtle dot-grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, #c8c4bb 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 52px 24px 100px;
+}
+
+/* ── HEADER ── */
+header {
+  margin-bottom: 44px;
+}
+
+.store-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--green);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 12px 5px 10px;
+  border-radius: 4px;
+  margin-bottom: 18px;
+}
+
+.store-badge svg {
+  width: 14px; height: 14px; opacity: 0.85;
+}
+
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(26px, 4vw, 38px);
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.15;
+  margin-bottom: 10px;
+}
+
+h1 em {
+  font-style: italic;
+  color: var(--green);
+}
+
+.subtitle {
+  color: var(--text-mid);
+  font-size: 14px;
+  font-weight: 400;
+  max-width: 520px;
+  line-height: 1.65;
+}
+
+.header-rule {
+  height: 2px;
+  background: linear-gradient(90deg, var(--green), var(--gold), transparent);
+  margin-top: 28px;
+  border-radius: 2px;
+}
+
+/* ── PANELS ── */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--green), var(--gold));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.panel:focus-within::before { opacity: 1; }
+
+.panel-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── DROPZONE ── */
+.dropzone-multi {
+  border: 2px dashed var(--border2);
+  border-radius: 6px;
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--surface2);
+  position: relative;
+}
+
+.dropzone-multi:hover,
+.dropzone-multi.drag-over {
+  border-color: var(--green);
+  background: var(--green-lt);
+}
+
+.dropzone-multi input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.drop-icon {
+  width: 44px; height: 44px;
+  margin: 0 auto 14px;
+  background: var(--green-lt);
+  border: 1.5px solid rgba(45,106,79,0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drop-icon svg { width: 20px; height: 20px; color: var(--green); }
+
+.drop-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.drop-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.drop-sub strong { color: var(--green); font-weight: 600; }
+
+/* File pills */
+.file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.file-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--green-lt);
+  border: 1px solid rgba(45,106,79,0.2);
+  color: var(--green-dark);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px 4px 8px;
+  border-radius: 20px;
+  font-family: 'DM Mono', monospace;
+}
+
+.file-pill-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--green-mid);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.file-pill-remove:hover { opacity: 1; }
+
+/* ── FORM ELEMENTS ── */
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media(max-width:560px){ .field-row{ grid-template-columns:1fr; } }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field.full { grid-column: 1 / -1; }
+
+label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-mid);
+}
+
+input[type="text"], select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+input[type="text"]:focus, select:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(45,106,79,0.1);
+}
+
+.field-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* ── TOGGLE ROW ── */
+.toggle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+}
+@media(max-width:560px){ .toggle-grid{ grid-template-columns:1fr; } }
+
+.toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.toggle-row input[type="checkbox"] {
+  width: 16px; height: 16px;
+  accent-color: var(--green);
+  cursor: pointer;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.toggle-row-text span {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.toggle-row-text small {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 22px 0;
+}
+
+/* ── RUN BUTTON ── */
+.btn-run {
+  width: 100%;
+  padding: 15px 24px;
+  background: var(--green);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(45,106,79,0.25);
+}
+
+.btn-run:hover:not(:disabled) {
+  background: var(--green-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(45,106,79,0.3);
+}
+
+.btn-run:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── PROGRESS ── */
+.progress-wrap {
+  display: none;
+  margin-top: 14px;
+}
+
+.progress-track {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), var(--gold));
+  border-radius: 2px;
+  transition: width 0.15s ease;
+  width: 0%;
+}
+
+.progress-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 6px;
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── STATS ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+@media(max-width:480px){ .stats-row{ grid-template-columns:repeat(2,1fr); } }
+
+.stat-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 12px;
+  text-align: center;
+}
+
+.stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 700;
+  display: block;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-num.green { color: var(--green); }
+.stat-num.gold  { color: var(--gold);  }
+.stat-num.dim   { color: var(--text-dim); }
+.stat-num.warn  { color: var(--warn); }
+
+.stat-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ── LOG ── */
+.log-wrap {
+  margin-top: 16px;
+  background: #1a1c22;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #2e3040;
+}
+
+.log-toolbar {
+  background: #22242e;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #2e3040;
+}
+
+.log-toolbar-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6a7090;
+}
+
+.log-clear {
+  background: none;
+  border: none;
+  color: #6a7090;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.05em;
+  transition: color 0.15s;
+}
+.log-clear:hover { color: #9090b0; }
+
+.log-body {
+  padding: 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  line-height: 1.75;
+  max-height: 280px;
+  overflow-y: auto;
+  color: #8a90b0;
+}
+
+.log-body:empty::before {
+  content: 'Conversion log will appear here…';
+  color: #3a3d52;
+}
+
+.log-body::-webkit-scrollbar { width: 5px; }
+.log-body::-webkit-scrollbar-track { background: transparent; }
+.log-body::-webkit-scrollbar-thumb { background: #2e3040; border-radius: 3px; }
+
+.l-ok   { color: #4caf82; }
+.l-warn { color: #d4900a; }
+.l-err  { color: #e05555; }
+.l-info { color: #5b8dee; }
+.l-head { color: #c8a84b; font-weight: 500; }
+.l-dim  { color: #4a4e66; }
+
+/* ── DOWNLOAD ── */
+.btn-download {
+  display: none;
+  width: 100%;
+  padding: 14px 24px;
+  background: var(--gold-lt);
+  border: 1.5px solid var(--gold);
+  border-radius: 6px;
+  color: var(--gold-dark);
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  text-decoration: none;
+  margin-top: 12px;
+}
+
+.btn-download:hover {
+  background: #fdf0c8;
+  box-shadow: 0 2px 12px rgba(184,134,11,0.2);
+  transform: translateY(-1px);
+}
+
+/* ── CALLOUT ── */
+.callout {
+  background: var(--info-bg);
+  border: 1px solid rgba(26,90,154,0.2);
+  border-radius: 5px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--info);
+  line-height: 1.6;
+  margin-top: 12px;
+}
+
+.callout strong { font-weight: 600; }
+
+/* ── SET COUNTER BADGE ── */
+.set-count-badge {
+  display: none;
+  background: var(--green);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+}
+
+/* Animate in */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.panel { animation: fadeUp 0.4s ease both; }
+.panel:nth-child(1){ animation-delay:0.05s }
+.panel:nth-child(2){ animation-delay:0.1s  }
+.panel:nth-child(3){ animation-delay:0.15s }
+.panel:nth-child(4){ animation-delay:0.2s  }
+
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header>
+    <div class="store-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Van Isle Collectables
+    </div>
+    <h1>TCGCSV → <em>Shopify</em><br>Product Import</h1>
+    <p class="subtitle">Convert one or more TCGCSV Magic: The Gathering set exports into a ready-to-import Shopify product CSV. Drop multiple set files to process them all at once.</p>
+    <div class="header-rule"></div>
+  </header>
+
+  <!-- PANEL 1: FILE INPUT -->
+  <div class="panel">
+    <div class="panel-label">
+      Source Files
+      <span class="set-count-badge" id="setCountBadge"></span>
+    </div>
+
+    <div class="dropzone-multi" id="dropzone">
+      <input type="file" id="fileInput" accept=".csv" multiple>
+      <div class="drop-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+          <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+        </svg>
+      </div>
+      <div class="drop-title">Drop TCGCSV files here</div>
+      <div class="drop-sub"><strong>Click to browse</strong> or drag &amp; drop — multiple sets supported</div>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <div class="callout" style="margin-top:14px;">
+      <strong>Expected format:</strong> TCGCSV export from tcgcsv.com → Magic: The Gathering → select set → Download CSV. Each file should contain columns including <code>productId</code>, <code>name</code>, <code>extNumber</code>, <code>extRarity</code>, <code>subTypeName</code>, <code>imageUrl</code>.
+    </div>
+  </div>
+
+  <!-- PANEL 2: CONFIGURATION -->
+  <div class="panel">
+    <div class="panel-label">Store Configuration</div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Vendor Name</label>
+        <input type="text" id="vendor" value="Van Isle Collectables">
+      </div>
+      <div class="field">
+        <label>SKU Prefix</label>
+        <input type="text" id="skuPrefix" value="VIC" maxlength="8" placeholder="VIC">
+      </div>
+      <div class="field full">
+        <label>Collection Metafield (custom.card_set)</label>
+        <input type="text" id="collectionMeta" value="" placeholder="Auto-set from each file's set name">
+        <span class="field-hint">Leave blank to auto-populate from each set's name. Override here to force a value across all sets.</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="panel-label" style="margin-bottom:14px;">Options</div>
+
+    <div class="toggle-grid">
+      <label class="toggle-row">
+        <input type="checkbox" id="optTokens" checked>
+        <div class="toggle-row-text">
+          <span>Include Tokens</span>
+          <small>Cards with rarity code T</small>
+        </div>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="optLands" checked>
+        <div class="toggle-row-text">
+          <span>Include Basic Lands</span>
+          <small>Cards with rarity code L</small>
+        </div>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="optFoil" checked>
+        <div class="toggle-row-text">
+          <span>Include Foil Variants</span>
+          <small>Generate Foil finish variants</small>
+        </div>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="optDraft" checked>
+        <div class="toggle-row-text">
+          <span>Import as Draft</span>
+          <small>Hidden until manually published</small>
+        </div>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="optOracleText" checked>
+        <div class="toggle-row-text">
+          <span>Include Oracle Text</span>
+          <small>As product Body (HTML) when available</small>
+        </div>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="optDedup" checked>
+        <div class="toggle-row-text">
+          <span>Skip Duplicates</span>
+          <small>Warn if same card appears across sets</small>
+        </div>
+      </label>
+    </div>
+  </div>
+
+  <!-- PANEL 3: CONVERT -->
+  <div class="panel">
+    <div class="panel-label">Convert</div>
+
+    <button class="btn-run" id="btnRun" disabled>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Generate Shopify Import CSV
+    </button>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">Preparing…</div>
+    </div>
+
+    <div class="stats-row" id="statsRow" style="display:none">
+      <div class="stat-box">
+        <span class="stat-num green" id="sProducts">0</span>
+        <span class="stat-lbl">Products</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num green" id="sVariants">0</span>
+        <span class="stat-lbl">Variants</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num gold" id="sSets">0</span>
+        <span class="stat-lbl">Sets</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num warn" id="sSkipped">0</span>
+        <span class="stat-lbl">Skipped</span>
+      </div>
+    </div>
+
+    <div class="log-wrap" id="logWrap">
+      <div class="log-toolbar">
+        <span class="log-toolbar-title">Conversion Log</span>
+        <button class="log-clear" onclick="clearLog()">Clear</button>
+      </div>
+      <div class="log-body" id="logBody"></div>
+    </div>
+
+    <a class="btn-download" id="btnDownload" href="#" download>
+      ↓ Download Shopify Import CSV
+    </a>
+  </div>
+
+</div>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CSV PARSER
+// ─────────────────────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i], nx = text[i+1];
+    if (inQ) {
+      if (ch === '"' && nx === '"') { field += '"'; i++; }
+      else if (ch === '"') { inQ = false; }
+      else { field += ch; }
+    } else {
+      if (ch === '"') { inQ = true; }
+      else if (ch === ',') { row.push(field); field = ''; }
+      else if (ch === '\n') {
+        row.push(field); field = '';
+        if (row.some(f => f !== '')) rows.push(row);
+        row = [];
+      } else if (ch !== '\r') { field += ch; }
+    }
+  }
+  if (row.length) { row.push(field); if (row.some(f => f !== '')) rows.push(row); }
+  return rows;
+}
+
+function toObjects(rows) {
+  if (rows.length < 2) return [];
+  const hdrs = rows[0].map(h => h.trim());
+  return rows.slice(1).map(r => {
+    const o = {};
+    hdrs.forEach((h, i) => { o[h] = (r[i] || '').trim(); });
+    return o;
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
+const CONDITIONS = [
+  { label: 'NM', sku: 'NM' },
+  { label: 'LP', sku: 'LP' },
+  { label: 'MP', sku: 'MP' },
+  { label: 'HP', sku: 'HP' },
+];
+
+const RARITY_MAP = {
+  'M': 'Mythic Rare',
+  'R': 'Rare',
+  'U': 'Uncommon',
+  'C': 'Common',
+  'L': 'Land',
+  'T': 'Token',
+  'S': 'Special',
+};
+
+const HEADERS = [
+  'Handle','Title','Body (HTML)','Vendor','Product Category','Type','Tags',
+  'Published','Option1 Name','Option1 Value','Option2 Name','Option2 Value',
+  'Variant SKU','Variant Grams','Variant Inventory Tracker','Variant Inventory Qty',
+  'Variant Inventory Policy','Variant Fulfillment Service','Variant Price',
+  'Variant Compare At Price','Variant Requires Shipping','Variant Taxable',
+  'Image Src','Image Position','Image Alt Text',
+  'Metafield: custom.card_set [single_line_text_field]','Status'
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function esc(v) {
+  const s = String(v == null ? '' : v);
+  return (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r'))
+    ? '"' + s.replace(/"/g, '""') + '"'
+    : s;
+}
+function csvRow(...vals) { return vals.map(esc).join(',') + '\n'; }
+
+function toHandle(s) {
+  return s.toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// Derive set code from filename: "10thEditionProductsAndPrices.csv" → "10th-edition"
+// or fall back to groupId
+function deriveSetCode(filename, groupId) {
+  // Try to strip "ProductsAndPrices.csv" suffix pattern
+  const base = filename.replace(/ProductsAndPrices\.csv$/i, '').replace(/\.csv$/i, '');
+  if (base) {
+    return base.replace(/([a-z])([A-Z])/g, '$1-$2')
+               .replace(/\s+/g, '-')
+               .replace(/-+/g, '-')
+               .replace(/^-|-$/g, '')
+               .toUpperCase()
+               .slice(0, 12);
+  }
+  return String(groupId || 'SET');
+}
+
+// Build a clean set name from the first record's name if we don't have one
+// TCGCSV doesn't include set name directly — we use filename
+function setNameFromFilename(filename) {
+  return filename
+    .replace(/ProductsAndPrices\.csv$/i, '')
+    .replace(/\.csv$/i, '')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .trim();
+}
+
+function buildBody(record, opts) {
+  if (!opts.oracleText) return '';
+  const oracle = record.extOracleText || '';
+  const subType = record.extSubType || '';
+  const flavor = record.extFlavorText || '';
+  if (!oracle && !subType) return '';
+  let html = '';
+  if (subType) html += `<p><em>${subType}</em></p>`;
+  if (oracle)  html += `<p>${oracle.replace(/\\r\\n/g, '<br>').replace(/\n/g, '<br>')}</p>`;
+  if (flavor)  html += `<p><em>${flavor.replace(/<\/?em>/g, '')}</em></p>`;
+  return html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CORE CONVERSION — one set file
+// ─────────────────────────────────────────────────────────────────────────────
+function convertSet(records, setCode, setName, config, seenHandles, log) {
+  const { vendor, skuPrefix, collectionMeta, optTokens, optLands,
+          optFoil, optDraft, optOracleText, optDedup } = config;
+
+  const status = optDraft ? 'draft' : 'active';
+  const metaVal = collectionMeta || setName;
+  let csv = '', products = 0, variants = 0, skipped = 0;
+
+  // Group rows by productId — each productId is a unique card printing
+  const byId = {};
+  for (const r of records) {
+    if (!r.productId) continue;
+    if (!byId[r.productId]) byId[r.productId] = [];
+    byId[r.productId].push(r);
+  }
+
+  // Sort by collector number numerically
+  const sortedIds = Object.keys(byId).sort((a, b) => {
+    const na = parseInt(byId[a][0].extNumber) || 0;
+    const nb = parseInt(byId[b][0].extNumber) || 0;
+    return na - nb || a.localeCompare(b);
+  });
+
+  for (const id of sortedIds) {
+    const rows = byId[id];
+    const sample = rows[0];
+
+    const rCode   = (sample.extRarity || '').toUpperCase();
+    const extNum  = sample.extNumber || '';
+    const name    = sample.name || '';
+
+    // Skip tokens/lands based on toggles
+    if (rCode === 'T' && !optTokens) { skipped++; continue; }
+    if (rCode === 'L' && !optLands)  { skipped++; continue; }
+
+    // Skip rows with no subTypeName (sealed/accessories)
+    const hasVariants = rows.some(r => r.subTypeName === 'Normal' || r.subTypeName === 'Foil');
+    if (!hasVariants) {
+      log('dim', `SKIP  [no subtype] ${name}`);
+      skipped++; continue;
+    }
+
+    const normalRow = rows.find(r => r.subTypeName === 'Normal') || null;
+    const foilRow   = rows.find(r => r.subTypeName === 'Foil')   || null;
+
+    const rarity    = RARITY_MAP[rCode] || rCode || 'Unknown';
+    const imgSrc    = (normalRow || foilRow || sample).imageUrl || '';
+    const body      = buildBody(normalRow || foilRow || sample, { oracleText: optOracleText });
+
+    // Title: "SET-CODE extNumber - Card Name"
+    const title  = `${setCode} ${extNum} - ${name}`;
+    let handle   = toHandle(`vic ${setCode} ${extNum} ${name}`);
+
+    // Dedup check
+    if (seenHandles[handle]) {
+      if (optDedup) {
+        log('warn', `DEDUP [${setCode}] ${title} — handle already exists, skipping`);
+        skipped++; continue;
+      }
+      seenHandles[handle]++;
+      handle = `${handle}-${seenHandles[handle]}`;
+    } else {
+      seenHandles[handle] = 1;
+    }
+
+    // Determine which finish variants to produce
+    const finishVariants = [];
+    if (normalRow) finishVariants.push({ label: 'Normal', sku: 'NORMAL', row: normalRow });
+    if (foilRow && optFoil) finishVariants.push({ label: 'Foil', sku: 'FOIL', row: foilRow });
+
+    // Tags
+    const tags = [
+      `Set: ${setName}`,
+      `Set Code: ${setCode}`,
+      `Rarity: ${rarity}`,
+    ].join(', ');
+
+    // Determine type
+    const productType = rCode === 'T' ? 'Token' : 'Single';
+
+    let firstRow = true;
+    for (const fv of finishVariants) {
+      for (const cond of CONDITIONS) {
+        const sku = `${skuPrefix}-${setCode}-${extNum}-${fv.sku}-${cond.sku}`;
+        csv += csvRow(
+          handle,
+          firstRow ? title    : '',
+          firstRow ? body     : '',
+          firstRow ? vendor   : '',
+          firstRow ? 'Toys & Games > Games > Card Games' : '',
+          firstRow ? productType : '',
+          firstRow ? tags     : '',
+          firstRow ? 'FALSE'  : '',        // Published = false (draft)
+          'Finish', fv.label,
+          'Condition', cond.label,
+          sku, '2', 'shopify', '0', 'deny', 'manual',
+          '0.00', '', 'TRUE', 'TRUE',
+          firstRow ? imgSrc   : '',
+          firstRow ? '1'      : '',
+          firstRow ? title    : '',
+          firstRow ? metaVal  : '',
+          firstRow ? status   : ''
+        );
+        firstRow = false;
+        variants++;
+      }
+    }
+    log('ok', `${productType.padEnd(6)} [${rarity.padEnd(11)}] ${title}`);
+    products++;
+  }
+
+  return { csv, products, variants, skipped };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOGGING
+// ─────────────────────────────────────────────────────────────────────────────
+const logEl = () => document.getElementById('logBody');
+
+function addLog(cls, msg) {
+  const el = logEl();
+  const line = document.createElement('div');
+  line.className = 'l-' + cls;
+  line.textContent = msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearLog() {
+  logEl().innerHTML = '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FILE STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let loadedFiles = []; // { name, text }
+
+function refreshFileList() {
+  const listEl  = document.getElementById('fileList');
+  const badge   = document.getElementById('setCountBadge');
+  const btnRun  = document.getElementById('btnRun');
+
+  listEl.innerHTML = loadedFiles.map((f, i) => `
+    <div class="file-pill">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      ${f.name}
+      <button class="file-pill-remove" onclick="removeFile(${i})" title="Remove">×</button>
+    </div>
+  `).join('');
+
+  if (loadedFiles.length > 0) {
+    badge.textContent = `${loadedFiles.length} file${loadedFiles.length > 1 ? 's' : ''}`;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  btnRun.disabled = loadedFiles.length === 0;
+}
+
+function removeFile(i) {
+  loadedFiles.splice(i, 1);
+  refreshFileList();
+  document.getElementById('btnDownload').style.display = 'none';
+  document.getElementById('statsRow').style.display = 'none';
+}
+
+function handleFiles(files) {
+  let pending = files.length;
+  if (!pending) return;
+  for (const file of files) {
+    if (!file.name.endsWith('.csv')) continue;
+    // Don't add duplicates
+    if (loadedFiles.find(f => f.name === file.name)) {
+      addLog('warn', `Already loaded: ${file.name}`);
+      pending--;
+      if (!pending) refreshFileList();
+      continue;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      loadedFiles.push({ name: file.name, text: e.target.result });
+      addLog('info', `Loaded: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
+      pending--;
+      if (!pending) refreshFileList();
+    };
+    reader.readAsText(file);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UI WIRING
+// ─────────────────────────────────────────────────────────────────────────────
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  handleFiles(Array.from(e.dataTransfer.files));
+});
+fileInput.addEventListener('change', function() {
+  handleFiles(Array.from(this.files));
+  this.value = ''; // reset so same file can be re-added after removal
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROGRESS HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function setProgress(pct, label) {
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = label;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN RUN
+// ─────────────────────────────────────────────────────────────────────────────
+document.getElementById('btnRun').addEventListener('click', () => {
+  if (!loadedFiles.length) return;
+
+  clearLog();
+  document.getElementById('btnDownload').style.display = 'none';
+  document.getElementById('statsRow').style.display    = 'none';
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('btnRun').disabled = true;
+  setProgress(5, 'Starting…');
+
+  const config = {
+    vendor:        document.getElementById('vendor').value.trim()       || 'Van Isle Collectables',
+    skuPrefix:     document.getElementById('skuPrefix').value.trim().toUpperCase() || 'VIC',
+    collectionMeta:document.getElementById('collectionMeta').value.trim(),
+    optTokens:     document.getElementById('optTokens').checked,
+    optLands:      document.getElementById('optLands').checked,
+    optFoil:       document.getElementById('optFoil').checked,
+    optDraft:      document.getElementById('optDraft').checked,
+    optOracleText: document.getElementById('optOracleText').checked,
+    optDedup:      document.getElementById('optDedup').checked,
+  };
+
+  setTimeout(() => {
+    try {
+      let fullCSV = HEADERS.join(',') + '\n';
+      let totalProducts = 0, totalVariants = 0, totalSkipped = 0;
+      const seenHandles = {};
+      const processedSets = [];
+
+      const step = 90 / loadedFiles.length;
+
+      for (let fi = 0; fi < loadedFiles.length; fi++) {
+        const f = loadedFiles[fi];
+        setProgress(5 + fi * step, `Processing ${f.name}…`);
+
+        const rows    = parseCSV(f.text);
+        const records = toObjects(rows);
+
+        if (records.length === 0) {
+          addLog('warn', `EMPTY file: ${f.name} — skipped`);
+          continue;
+        }
+
+        // Derive set info from filename
+        const setName = setNameFromFilename(f.name);
+        const groupId = records[0].groupId || '';
+        const setCode = deriveSetCode(f.name, groupId);
+
+        addLog('head', `── ${setName} (${setCode}) — ${records.length} rows ──`);
+
+        const result = convertSet(
+          records, setCode, setName, config, seenHandles,
+          (cls, msg) => addLog(cls, msg)
+        );
+
+        fullCSV += result.csv;
+        totalProducts += result.products;
+        totalVariants += result.variants;
+        totalSkipped  += result.skipped;
+        processedSets.push(setName);
+
+        addLog('ok', `  ✓ ${result.products} products, ${result.variants} variants, ${result.skipped} skipped`);
+      }
+
+      setProgress(100, 'Done!');
+
+      addLog('head', `─── Total: ${totalProducts} products · ${totalVariants} variants · ${totalSkipped} skipped ───`);
+      addLog('info', `Sets processed: ${processedSets.join(', ')}`);
+
+      // Stats
+      document.getElementById('sProducts').textContent = totalProducts.toLocaleString();
+      document.getElementById('sVariants').textContent = totalVariants.toLocaleString();
+      document.getElementById('sSets').textContent     = processedSets.length;
+      document.getElementById('sSkipped').textContent  = totalSkipped;
+      document.getElementById('statsRow').style.display = 'grid';
+
+      // Download
+      const blob     = new Blob([fullCSV], { type: 'text/csv;charset=utf-8;' });
+      const url      = URL.createObjectURL(blob);
+      const date     = new Date().toISOString().slice(0, 10);
+      const fname    = processedSets.length === 1
+        ? `VIC_${processedSets[0].replace(/\s+/g, '_')}_shopify_${date}.csv`
+        : `VIC_multi_set_shopify_${date}.csv`;
+      const btn      = document.getElementById('btnDownload');
+      btn.href       = url;
+      btn.download   = fname;
+      btn.textContent = `↓ Download  ${fname}`;
+      btn.style.display = 'block';
+
+    } catch(err) {
+      addLog('err', `ERROR: ${err.message}`);
+      console.error(err);
+    }
+
+    document.getElementById('btnRun').disabled = false;
+    setTimeout(() => {
+      document.getElementById('progressWrap').style.display = 'none';
+      setProgress(0, '');
+    }, 1000);
+
+  }, 60);
+});
+</script>
+</body>
+</html>
