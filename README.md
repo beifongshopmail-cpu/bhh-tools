@@ -3,5 +3,5 @@
 ## [HTML Tool 1 - Master CSV reformatter](https://beifongshopmail-cpu.github.io/bhh-tools/HTML Tool 1 - Master CSV reformatter.html)
 Converts a TCGCSV master export into a Shopify product import CSV.
 
-## [HTML Tool 2 - Pricing CSV reformatter](https://beifongshopmail-cpu.github.io/bhh-tools/HTML Tool 2 - Pricing CSV reformatter.html)
+## [HTML Tool 2 - Pricing CSV reformatter](https://beifongshopmail-cpu.github.io/bhh-tools/HTML2PricingCSVreformatter.html)
 Matches a Collectr One-of-Everything portfolio export against a Shopify products export to generate a price update CSV.
