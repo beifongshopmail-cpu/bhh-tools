@@ -1,1 +1,1 @@
-# Beifong's Hit-House Custom HTML Toolkit | Riftbound Initial Listings & Pricing Updates
+# BHH Custom HTML Toolkit | Riftbound Initial Listings & Pricing Updates
