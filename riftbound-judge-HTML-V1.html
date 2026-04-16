@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riftbound Judge AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dim: #7a6330;
+    --dark: #0d0d0f;
+    --dark-mid: #13131a;
+    --dark-panel: #1a1a24;
+    --dark-border: #2a2a3a;
+    --text: #e8e0d0;
+    --text-dim: #8a8070;
+    --blue-accent: #4a7fa5;
+    --red-accent: #a54a4a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Crimson Pro', Georgia, serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(201,168,76,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 80% 90%, rgba(74,127,165,0.05) 0%, transparent 70%),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 60px,
+        rgba(201,168,76,0.015) 60px,
+        rgba(201,168,76,0.015) 61px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 60px,
+        rgba(201,168,76,0.015) 60px,
+        rgba(201,168,76,0.015) 61px
+      );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 860px;
+    padding: 0 20px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 48px 0 36px;
+    position: relative;
+  }
+
+  .header-ornament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .ornament-line {
+    height: 1px;
+    width: 80px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  }
+
+  .ornament-diamond {
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    transform: rotate(45deg);
+    box-shadow: 0 0 8px var(--gold);
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--gold-light);
+    text-shadow: 0 0 30px rgba(201,168,76,0.3);
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    font-style: italic;
+    color: var(--text-dim);
+    margin-top: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  /* API Key panel */
+  .api-panel {
+    background: var(--dark-panel);
+    border: 1px solid var(--dark-border);
+    border-top: 2px solid var(--gold-dim);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    position: relative;
+  }
+
+  .api-panel::before {
+    content: 'CONFIGURATION';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--dark-panel);
+    padding: 0 8px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--gold-dim);
+  }
+
+  .api-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .api-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .api-input {
+    flex: 1;
+    min-width: 200px;
+    background: var(--dark);
+    border: 1px solid var(--dark-border);
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .api-input:focus {
+    border-color: var(--gold-dim);
+  }
+
+  .api-input::placeholder { color: var(--text-dim); opacity: 0.5; }
+
+  .btn-save {
+    background: transparent;
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-save:hover {
+    background: rgba(201,168,76,0.1);
+    border-color: var(--gold);
+  }
+
+  .api-status {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+
+  .api-status.ok { color: #6aaa6a; }
+  .api-status.err { color: var(--red-accent); }
+
+  /* Chat area */
+  .chat-area {
+    background: var(--dark-panel);
+    border: 1px solid var(--dark-border);
+    min-height: 420px;
+    max-height: 560px;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scroll-behavior: smooth;
+  }
+
+  .chat-area::-webkit-scrollbar { width: 4px; }
+  .chat-area::-webkit-scrollbar-track { background: transparent; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--dark-border); }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px;
+    opacity: 0.5;
+  }
+
+  .empty-glyph {
+    font-size: 2.5rem;
+    color: var(--gold-dim);
+  }
+
+  .empty-text {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  /* Messages */
+  .msg {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .msg-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--dark-border);
+  }
+
+  .msg.user .msg-label { color: var(--text-dim); }
+  .msg.assistant .msg-label { color: var(--gold-dim); }
+  .msg.system-msg .msg-label { color: var(--blue-accent); opacity: 0.7; }
+
+  .msg-body {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: var(--text);
+    padding: 14px 16px;
+    border-left: 2px solid transparent;
+  }
+
+  .msg.user .msg-body {
+    background: rgba(255,255,255,0.03);
+    border-left-color: var(--dark-border);
+    font-style: italic;
+    color: #c8c0b0;
+  }
+
+  .msg.assistant .msg-body {
+    background: rgba(201,168,76,0.04);
+    border-left-color: var(--gold-dim);
+  }
+
+  .msg.system-msg .msg-body {
+    background: rgba(74,127,165,0.06);
+    border-left-color: var(--blue-accent);
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  /* Markdown-like formatting in responses */
+  .msg-body strong { color: var(--gold-light); font-weight: 600; }
+  .msg-body em { color: var(--text-dim); font-style: italic; }
+  .msg-body code {
+    font-family: 'Courier New', monospace;
+    background: rgba(0,0,0,0.3);
+    padding: 1px 5px;
+    font-size: 0.9em;
+    color: var(--gold-light);
+    border: 1px solid var(--dark-border);
+  }
+
+  .msg-body .rule-ref {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8em;
+    color: var(--gold-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* Fetched cards display */
+  .cards-fetched {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .card-pill {
+    background: rgba(201,168,76,0.08);
+    border: 1px solid var(--gold-dim);
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    font-family: 'Cinzel', serif;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+  }
+
+  /* Loading indicator */
+  .loading-msg .msg-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .dots span {
+    width: 5px;
+    height: 5px;
+    background: var(--gold-dim);
+    border-radius: 50%;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulse {
+    0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  /* Input area */
+  .input-area {
+    border: 1px solid var(--dark-border);
+    border-top: none;
+    background: var(--dark-mid);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  textarea {
+    flex: 1;
+    background: var(--dark);
+    border: 1px solid var(--dark-border);
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    padding: 12px 14px;
+    resize: none;
+    min-height: 72px;
+    max-height: 160px;
+    outline: none;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus { border-color: var(--gold-dim); }
+  textarea::placeholder { color: var(--text-dim); opacity: 0.4; font-style: italic; }
+
+  .btn-ask {
+    background: var(--gold-dim);
+    border: none;
+    color: var(--dark);
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    align-self: stretch;
+    min-width: 90px;
+  }
+
+  .btn-ask:hover:not(:disabled) {
+    background: var(--gold);
+  }
+
+  .btn-ask:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .input-hints {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .hint-text {
+    font-size: 0.78rem;
+    font-style: italic;
+    color: var(--text-dim);
+    opacity: 0.6;
+  }
+
+  .btn-clear {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    padding: 2px 0;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+  }
+
+  .btn-clear:hover { opacity: 1; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 24px 0 0;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    opacity: 0.4;
+    font-style: italic;
+    letter-spacing: 0.05em;
+  }
+
+  /* Divider ornament */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0;
+    opacity: 0.3;
+  }
+
+  .section-divider::before,
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--gold-dim);
+  }
+
+  .section-divider-dot {
+    width: 4px;
+    height: 4px;
+    background: var(--gold-dim);
+    transform: rotate(45deg);
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .api-row { flex-direction: column; align-items: stretch; }
+    .api-label { display: none; }
+    h1 { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="header-ornament">
+      <div class="ornament-line"></div>
+      <div class="ornament-diamond"></div>
+      <div class="ornament-line"></div>
+    </div>
+    <h1>RIFTBOUND JUDGE AI</h1>
+    <div class="subtitle">Powered by Claude Opus · Core Rules · Tournament Rules · Patch Notes · Errata · FAQ</div>
+    <div class="header-ornament" style="margin-top:16px; margin-bottom:0;">
+      <div class="ornament-line"></div>
+      <div class="ornament-diamond"></div>
+      <div class="ornament-line"></div>
+    </div>
+  </header>
+
+  <!-- API Key Panel -->
+  <div class="api-panel">
+    <div class="api-row">
+      <span class="api-label">ANTHROPIC API KEY</span>
+      <input type="password" class="api-input" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
+      <button class="btn-save" onclick="saveKey()">SAVE KEY</button>
+    </div>
+    <div class="api-status" id="apiStatus">Enter your Anthropic API key to begin. Keys are stored in your browser only.</div>
+  </div>
+
+  <!-- Chat Area -->
+  <div class="chat-area" id="chatArea">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-glyph">⚖</div>
+      <div class="empty-text">
+        ASK A JUDGE QUESTION<br>
+        Card names are looked up automatically
+      </div>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="input-area">
+    <div class="input-row">
+      <textarea 
+        id="questionInput" 
+        placeholder="e.g. How does Zhonya's Hourglass interact with Yasuo's attack trigger if Yasuo is moved mid-chain?"
+        onkeydown="handleKey(event)"
+      ></textarea>
+      <button class="btn-ask" id="askBtn" onclick="askQuestion()">ASK</button>
+    </div>
+    <div class="input-hints">
+      <span class="hint-text">Shift+Enter for new line · Enter to submit</span>
+      <button class="btn-clear" onclick="clearChat()">CLEAR HISTORY</button>
+    </div>
+  </div>
+
+  <footer>
+    Rules sourced from riftbound.leagueoflegends.com · Card data from riftcodex.com · Not affiliated with Riot Games
+  </footer>
+</div>
+
+<script>
+// ─── RULES CONTENT ────────────────────────────────────────────────────────────
+const CORE_RULES = `RIFTBOUND CORE RULES — Last Updated: 2026-03-30
+
+000. GOLDEN AND SILVER RULES
+001. Golden Rule: Card text supersedes rules text. Whenever a card fundamentally contradicts the rules, the card's indication is what is true.
+050. Silver Rule: Card text uses different terminology than rules. Card text should be interpreted according to these rules, not as though it were text within these rules.
+052. "Card" in card effects is shorthand for "Main Deck card." Runes, legends, and battlefields are not considered cards when executing abilities/effects. They are considered cards for the purposes of these rules.
+053. Cards refer to themselves in first person. Units/legends say "I"/"me". Gear/spells say "this". Battlefields say "here". Cards may refer to themselves by name for clarity.
+054. "Can't beats Can": Cards that forbid actions supersede cards that allow them.
+055. Do as much as you can when executing card text, ignoring impossible instructions. If all instructions are impossible, the card is still played/resolved but nothing happens.
+056. Cards a player owns may never be placed into a non-Board zone belonging to another player. If a card would enter such a zone, it goes to its owner's corresponding zone instead.
+
+100. GAME CONCEPTS — DECK CONSTRUCTION
+103. To play, a player needs: 1 Champion Legend, a Main Deck (40+ cards including 1 Chosen Champion), a Rune Deck (exactly 12 runes), and Battlefields (number per Mode of Play).
+103.1. Champion Legend goes in Legend Zone at start. Dictates Domain Identity. Cards must abide by Domain Identity. Domain Identity = domains of Champion Legend.
+103.2. Main Deck: at least 40 cards, 1 Chosen Champion, up to 3 copies of same named card (including Chosen Champion). Chosen Champion must be a champion unit with matching champion tag. A player's Chosen Champion = the specific card + any card with the same name.
+103.2.d. Deck may only contain 3 total Signature cards with the Champion tag matching the Champion Legend. Signature cards are not champion units and cannot be placed in Champion Zone.
+103.3. Rune Deck: exactly 12 rune cards of the Domain Identity. Kept separate and shuffled.
+103.4. Battlefields: number per Mode of Play, subject to Domain Identity, no duplicates by name when multiple required.
+
+ZONES:
+107. The Board contains: Bases (each player's permanents/runes), Battlefield Zone (multiple Battlefields, each a Location), Facedown Zones (one per Battlefield, max 1 card, only controller can place/occupy, private info, lost if controller loses Battlefield), Legend Zone (not a location, Champion Legend cannot be removed).
+108. Non-Board Zones: The Chain (cards/abilities being played, public), Trashes (killed/discarded cards, public, unordered), Champion Zones (Chosen Champion starts here, public), Main Deck Zones (secret), Rune Deck Zones (secret), Banishments (public, unordered), Hands (private, count is public).
+110. Whenever a Game Object changes zones to/from a Non-Board Zone, ALL temporary modifications cease: damage cleared, buffs removed, granted keywords removed.
+
+PRIVACY LEVELS:
+128.3. Secret: No player may look at the face.
+128.4. Private: Only controller (on board) or owner (other zones) may look.
+128.5. Public: Any player may look.
+Public zones: Battlefield Zones, Bases, Trashes, Legend Zones, Champion Zones, Facedown Zones.
+
+SETUP:
+112-119. Place Champion Legend in Legend Zone. Place Chosen Champion in Champion Zone. Set aside Battlefields. Shuffle and place decks. Determine turn order. Each player draws 4. Mulligan (may set aside up to 2, draw same number back, then Recycle those set aside). Begin play.
+
+GAME OBJECTS: Anything that can produce Game Effects or grant prerequisites. Includes main deck cards in any zone, runes, legends, battlefields, tokens, abilities on chain, buffs.
+
+UNITS:
+141. Units are Game Objects and a Card Type.
+142. Damage is a marked value on units. Tracks closeness to being Killed.
+143. Might = combat statistic. If non-zero damage >= Might, unit is Killed. Might below 0 treated as 0 for references/combat (but actual value used for increase/decrease calculations). Damage is Healed: at end of each player's turn, and during Combat Cleanup.
+143.4. Units enter the Board exhausted (can be altered by Accelerate).
+144. Units have inherent ability: Standard Move. Can be done any time during controlling player's Main Phase (not during Closed State, not during Showdown or Combat). Cost: exhaust the unit. Multiple units can move simultaneously if to same destination. Units can move from Base to Battlefield (not if 2 other players present or ongoing combat with 2 other players). Units can move from Battlefield to Base. Ganking allows Battlefield-to-Battlefield movement.
+
+GEAR: Enter play Ready. Played to Base (exception: played from Facedown goes to that Battlefield). If unattached Gear at Battlefield during cleanup, recalled to Base.
+
+SPELLS: Played during Open State outside Showdowns on controller's turn. Executes rules text top-to-bottom, then goes to Trash. While resolving, no other spells/abilities can be finalized or resolved — finish resolving before addressing new chain items. Action keyword: can also be played during Open States during Showdowns. Reaction keyword: can be played during all forms of Closed State, resolves before items already on chain.
+
+RUNES (Card Type, not Main Deck cards, not Permanents): Kept in Rune Deck (12 cards). Produce Energy and Power. Energy = numeric costs (no domain). Power = domain-associated costs. Basic Runes: [E]: [Reaction] — Add [1]. Recycle this: [Reaction] — Add [C] (domain power).
+Rune Pool: conceptual collection of available Energy/Power. Must be added before spending. Empties at end of each player's draw phase and end of each player's turn.
+
+BATTLEFIELDS: Not permanents. Not played. Start game on board. Cannot be Killed or Moved. Are Locations (origins/destinations of moves). Any number of units can be present. Can have Passive/Triggered Abilities. Can be occupied, uncontrolled, or open.
+
+LEGENDS: Not permanents. Not played. Start in Legend Zone. Cannot be Killed or Moved. Can be targeted. Can have Passive/Triggered/Activated Abilities. May have Domains (determines Domain Identity).
+
+TOKENS: Created by spells/abilities. Controller = controller of creating spell/ability. Not cards. Have no costs (cost treated as 0). No domains. Cease to exist if put in Non-Board Zone (except chain). Specific token types defined: 1[M] Recruit, 3[M] Sprite (Temporary), 2[M] Sand Soldier, 3[M] Mech, Gold gear token (Reaction: Kill this, [E]: Add [A]), 0[M] Reflection, 1[M] Bird (Deflect), Brush battlefield token, Baron Pit battlefield token.
+
+CONTROL: Battlefields — controlled or uncontrolled. Contested status applied when unit from player who doesn't control moves there. Combat/Showdown occurs from Contested. Everything else — Controller = player who played it. Changes to source control don't change ability control.
+
+TURN STRUCTURE:
+315. Start of Turn: Awaken Phase (ready all game objects), Beginning Phase (Beginning Step, then Scoring Step — Hold all Battlefields controlled), Channel Phase (channel 2 runes), Draw Phase (draw 1, Rune Pool empties).
+316. Main Phase: open-ended, Neutral Open State. Turn player may take Discretionary Actions. Combat and Showdowns occur here.
+317. Ending Phase: Ending Step (end-of-turn effects), Expiration Step (Heal all units, expire "this turn" effects, Rune Pool empties).
+
+STATES:
+Neutral State = no Showdown or Combat in progress.
+Showdown State = Showdown or Combat in progress.
+Open State = no Chain exists.
+Closed State = Chain exists.
+The four states: Neutral Open, Neutral Closed, Showdown Open, Showdown Closed.
+Default: cards/abilities can only be played/activated in Neutral Open by Turn Player with priority.
+
+PRIORITY: Singular exclusive right to take Discretionary Actions. One player max has Priority. Turn Player gets it in Neutral Open during Main Phase. In Closed State, passes in turn order after each player. FOCUS: Permission to act in Showdown Open State. Gaining Focus = gaining Priority. Passing Priority retains Focus.
+
+CLEANUPS: Occur after state changes, phase transitions, chain items added/removed, game objects enter/leave Board, status changes, moves complete. While cleanup occurring, chain items cannot resolve. Steps: 1) Check win condition. 2) Assign/remove Attacker/Defender designations. 3) Handle outstanding board state (3a: Deathknell abilities trigger, 3b: units with damage >= Might killed). 4) Unoccupied Battlefields with no ongoing Showdown/Combat become Uncontrolled. 5) Recall unattached non-unit Gear at Battlefields; remove Hidden cards from Battlefields not controlled by same player. 6-7) Mark Showdowns/Combats as Staged. 8-9) Begin Showdowns/Combats.
+
+CHAINS: Non-Board Zone. Exists when card played or ability activated. Items added as Pending, become Finalized. Only one Chain at a time. Chain = Closed State. FEPR process: Finalize → Execute → Pass → Resolve.
+
+SHOWDOWNS: Window of opportunity. Players alternate Focus. Showdown begins when Contested applied to Battlefield in Neutral Open State. Player who applied Contested gains Focus. Players with Focus can play Action/Reaction cards or activate abilities, or pass. If all pass in sequence, Showdown closes. Non-Combat Showdown: player with units gains Control if they don't already have it (Conquer if not scored this turn). Combat Showdown: proceeds to Combat steps.
+
+PLAYING CARDS (6 steps):
+1. Remove from zone, put on Chain (Pending). Closes State.
+2. Make choices: targets, destinations, modes.
+3. Determine Total Cost: apply base cost modifications, additional costs, increases, discounts.
+4. Pay costs.
+5. Check legality: targets legal? outcome legal? timing appropriate?
+6. Finalize: Permanents enter Board (passive abilities active, enter exhausted if unit, ready if gear). Spells linger on Chain as Finalized Items, then resolve (top to bottom) and go to Trash.
+
+TARGETING: A game object is a target unless: in non-public zone; included only as targeting restriction; included only as cost/trigger condition/replacement effect; programmatically selected (no choice possible); part of set chosen by other players; in a "must" instruction. Some cards have group targets. Splitting damage: each target valid, amount decided at resolution.
+
+ABILITIES:
+363. Passive Abilities: conditions/rules/constraints. Active on board (for permanents). Can be Replacement Effects ("would"/"instead"). 
+367. Replacement Effects: apply once per event. If multiple apply to same event, owner of affected object decides order. Can only be applied in one sequence to simultaneous events.
+376. Activated Abilities: cost ":" effect. Can activate during controlling player's Main Phase in Open State, not during Showdown. Goes on Chain like a spell. Recognized by ":" with cost before and effect after.
+382. Triggered Abilities: "when" condition met OR "at" time OR "[Nth] time." Condition evaluated after inciting event. If Game Object has triggered ability active in zone, evaluated when it enters that zone at same time condition met. Goes on Chain. If "you may" = optional placement. Can trigger during Closed or Open States any player's turn. If multiple trigger simultaneously, controlling player orders them. Attack Triggers: when unit gains Attacker designation for first time in combat (once per combat). Defend Triggers: similarly for Defender designation.
+
+SPECIFIC TRIGGER TYPES:
+Play Effects: triggered when permanent is played to board. Goes on Chain AFTER permanent enters board.
+Targeting Effects: triggered when Game Object is targeted. Goes on Chain after spell/ability targeting it is Finalized.
+Conquer Effects: triggered when player gains Control of Battlefield + gains 1 VP from conquering.
+Hold Effects: triggered when unit present at Battlefield during Beginning Phase when player scores from Holding.
+
+COMBAT:
+454. Combat occurs when units controlled by opposing players are at same Battlefield. Only between two players.
+Steps of Combat:
+1. Combat Showdown (players alternate playing Actions/Reactions)
+2. If Showdown closes with both players' units present: Combat Damage Step
+3. Combat Cleanup (special cleanup)
+460. Combat Damage Step: All Attackers deal damage equal to their Might to all Defenders total (split evenly, if uneven excess goes to first defender in turn order). All Defenders deal damage to all Attackers similarly. Damage assigned simultaneously. Attacker = units controlled by player who Contested (moved to Battlefield). Defender = units controlled by player who already controlled Battlefield.
+461. Combat Cleanup: After damage assigned. Deathknell triggers first (3a). Units with damage >= Might killed (3b). Damage healed. 
+462. Scoring: Hold = maintain Control of Battlefield at start of your turn's Beginning Phase = 1 VP. Conquer = player gains Control of previously uncontrolled or enemy-controlled Battlefield = 1 VP. Final Point rule: if scoring would win game, specific conditions apply.
+
+KEYWORDS (800+):
+805. Accelerate: Unit enters Board ready instead of exhausted (optional, additional cost may apply).
+806. Action: Card can be played during Open States in Showdowns.
+807. Buff: Buff token. Represents a reusable resource on a unit. Can be "spent" (removed) for effects.
+808. Deathknell: Triggered ability that fires just BEFORE the unit is killed in cleanup (3a fires before 3b). Unit is still alive when Deathknell triggers.
+809. Deflect: When this unit would be chosen as a target of a spell or ability, you may pay [1] as an additional cost. If you don't pay, it can't be the target. (Mandatory additional cost to target it — opponent must pay or choose different target.)
+810. Ganking: Unit can Standard Move from Battlefield to Battlefield.
+811. Hidden: Card can be placed facedown in Facedown Zone of a Battlefield the controller controls. Can be played from Facedown Zone at any time the card could normally be played (plus during Showdowns if Action/Reaction). When played from Facedown, normal play rules apply but location restrictions reference the Battlefield it was played from. Gear played from Facedown goes to that Battlefield (exception to normal Gear rules).
+812. Legion: Conditional ability. Gets effect if you've played another card this turn. Usually written "[Legion] — [effect instead/in addition]".
+813. Reaction: Can be played during all forms of Closed State. Resolves before items already on Chain.
+814. Recall: Move a unit from its current location to its Base.
+815. Shield: When this unit would take damage, prevent that damage and remove Shield instead. (Replacement effect.)
+816. Temporary: When this unit leaves the board for any reason, it ceases to exist (goes to owner's trash, then ceases to exist as a token).
+817. Unique: Only one copy of this card can be controlled by a single player at a time. If a second copy would enter the board under the same player's control, the first is killed.
+818. Predict: Look at the top N cards of your Main Deck. Put them back in any order.
+819. Level: Dependent keyword. The ability after [Level][>] is inactive until the Level condition is met (usually having played enough cards this turn). Once met, it activates.
+820. Reign: Passive. While you control more battlefields than each opponent, you get the Reign effect.`;
+
+const TOURNAMENT_RULES_SUMMARY = `RIFTBOUND TOURNAMENT RULES — Last Updated: 2026-03-30
+
+KEY TOURNAMENT RULES FOR JUDGES:
+
+DECK CONSTRUCTION (competitive):
+- Main Deck: exactly 40 cards (including Chosen Champion)
+- 1 Legend, 12 Runes, exactly 3 Battlefields (unique names)
+- Sideboard: up to 8 cards (high OPL only), valid Main Deck cards, copy limits apply to main+sideboard combined
+- Cards must be from legal sets. Current Standard: OGN (Origins), OGS (Origins supplemental), SFD (Spiritforged), UNL (Unleashed, legal 5/8/26 rest of world)
+- BANNED: Called Shot, Draven Vanquisher, Fight or Flight, Scrapheap (cards); Dreaming Tree, Obelisk of Power, Reaver's Row (battlefields)
+
+MATCH STRUCTURE:
+- Best of 3 (win 2 games). If time runs out: current player finishes turn + 3 additional turns. If no winner, player with point lead of 2+ wins; otherwise draw.
+- Concessions/draws allowed at any time but cannot be exchanged for compensation (bribery).
+- Loser of previous game chooses play order for next game.
+
+COMMUNICATION:
+- Players must communicate honestly about game state. Not required to assist opponents.
+- Shortcuts are permitted (e.g., passing through Beginning Phase by channeling/drawing).
+- Triggered ability rules: accountable player must acknowledge triggers before observable impact. If missed = forgotten. Missed trigger penalty: opponent in turn order chooses whether to resolve or miss it.
+
+GAME PLAY ERROR PENALTIES:
+- Missed Trigger: No penalty normally. Warning if mandatory trigger missed and advantageous to erroring player. Remedy: opponent chooses resolve or miss.
+- Forgetting to Score: No penalty. Remedy: correct if within 1 round cycle.
+- Forgetting to Draw: No penalty (Warning if advantageous). Remedy: draw missing cards if within 1 round cycle.
+- Drawing Extra Cards: Warning. Remedy: opponent looks at hand, chooses cards to shuffle back.
+- Channeling Too Many Runes: Warning. Remedy: rewind or shuffle extra runes back.
+- Mispayment for Cost: Warning. Remedy: simple rewind if possible.
+- Looking at Secret Info: Warning. Remedy: re-randomize.
+- General Error: Warning. Remedy: rewind if possible.
+
+TOURNAMENT ERROR PENALTIES:
+- Decklist Error: Game Loss.
+- Slow Play: Warning.
+- Communication Violation: Warning.
+- Marked Cards: Warning + replace sleeves/cards.
+- Insufficient Randomization: Warning + re-randomize.
+- Late to Match: Warning (<10min), Game Loss at high OPL, Match Loss (>10min).
+- Outside Assistance: Warning (if refused) or Match Loss.
+
+UNSPORTING CONDUCT:
+- Minor (disrespect, bullying): Warning.
+- Major (hate speech, violence): Disqualification + possible ejection.
+- Angle Shooting: Warning.
+- Bribery: Match Loss.
+- Cheating: Disqualification + investigation.
+
+OPL LEVELS:
+- Casual (low): Education focus, lower penalties.
+- Competitive (high): Stricter enforcement.
+- Professional (high): Strictest, open decklists recommended.
+
+SIDEBOARD: May exchange 1-for-1 with Main Deck between games. May change Chosen Champion. Cannot change Runes, Legend, or Battlefields after deck registration.
+
+SHUFFLING: Must be random. Pile shuffling alone insufficient. Present deck to opponent after randomizing.
+
+PROXIES: Not allowed except official proxy issued by head judge for damaged card.
+ALTERS: Allowed if they don't modify card name/cost, contain strategic advice, or offensive content.
+LANGUAGES: Any official Riftbound card language is legal. Watcher wording available in preferred language on judge request.`;
+
+// ─── PATCH NOTES & ERRATA ─────────────────────────────────────────────────────
+const PATCH_NOTES_AND_ERRATA = `
+═══════════════════════════════════════════════════════
+RIFTBOUND CORE RULES PATCH NOTES — ORIGINS (2025-10-24)
+═══════════════════════════════════════════════════════
+New Silver Rules added: "Can't beats Can" and "Do as much as you can" (DAMAYC).
+Clarified: You cannot ready something already ready (it can be targeted but won't trigger).
+Clarified: Domain Identity is keyed off Champion Legend.
+Clarified: Chosen Champion = any Champion Unit with same name as the one that started in Champion Zone (not one specific card).
+Clarified: Champion Zone max occupancy 1.
+Clarified: Main Deck is secret to EVERYONE.
+Clarified: Cards returned to hand go to owner's hand only. Recycled cards go to owner's deck only.
+Clarified: No duplicate battlefields in a deck. In 2v2, partners cannot share battlefields. Partners cannot share Champion Legends.
+Clarified: Partners win/lose together; one conceding = partner loses too.
+NEW: Damage, Deal, and Heal are now formally defined game actions.
+NEW: Bonus Damage is formally defined. Each instance of damage from a spell is increased by 1 per Bonus Damage.
+REMOVED: "Relevant Players" and Invite mechanic from FFA. All players always have agency in Showdowns/Chains.
+Clarified: Basic rune abilities have Reaction (they always did).
+NEW SYSTEM: Pending/Finalizing added. FEPR process defined (Finalize, Execute, Pass, Resolve).
+NEW: Triggered abilities that incur a cost when put on chain may be REFUSED — this causes them to fail to finalize.
+IMPORTANT DEFLECT CHANGE: Players can now refuse Deflect costs incurred by triggered abilities, causing the trigger to fail to finalize.
+NEW: Reflexive triggers defined (identified by "Do this:" or "Do one of the following:").
+NEW: Attack triggers fire once per combat (first time unit gains Attacker designation). Same for Defend triggers. This CHANGED from prior FAQ — they only trigger once per combat.
+NEW: Looping Layers — layers now apply repeatedly until all effects applied/removed once with no objects changing.
+Clarified: Targeting has clear definitions. Move destinations are required choices made at time of putting card on chain.
+Clarified: Unavailable numerical information = null (not 0). Null + anything = null.
+Clarified: Control of battlefield is established at end of non-combat showdown.
+Clarified: Players can't lose control of battlefields while battlefield is contested, even if they have no units there.
+Clarified: Hidden cards gain Reaction when played from facedown. Zhonya's Hourglass no longer restricts its replacement effect to the battlefield it was hidden at.
+Clarified: Add abilities finalize immediately like Units/Gear. Focus and Priority do not pass on resolution of Add abilities.
+Clarified: Recall = move to object's base only, does not affect object's state, is NOT a move.
+Clarified: Accelerate cost always matches domain of the unit; if no domain or multiple domains, becomes [A].
+
+═══════════════════════════════════════════════════════
+RIFTBOUND CORE RULES PATCH NOTES — SPIRITFORGED (2025-12-05)
+═══════════════════════════════════════════════════════
+NEW SYSTEM: Attachment / Attached / Detached. Cards can attach to other cards (gear attaches to units). Attached card's rules text becomes INACTIVE; its Effect Text and Might Bonus become ACTIVE.
+NEW SYSTEM: Effect Text (separate section below Rules Text, inactive unless attached). Might Bonus (modulates Might of card it's attached to).
+NEW SYSTEM: Inactive Rules. Inactive text has no effect but still EXISTS — other effects can still detect it (e.g. "destroy a card with Temporary" can target something with inactive Temporary).
+NEW KEYWORD: Equip [cost]: Attach this Equipment to a unit you control. Cannot Equip if already attached. If unit carrying it is killed or leaves board, you keep the gear.
+NEW KEYWORD: Quick-Draw: Equipment has Reaction. When you play it, attach it to a unit you control. Does NOT change when you can use the Equip ability.
+NEW KEYWORD: Weaponmaster (Play Effect): When you play me, you may Equip one of your Equipment to me for [A] less, even if already attached. OPTIONAL (reminder text is more accurate than rules text on this point).
+NEW KEYWORD: Repeat [cost]: Optional additional cost. When paid, execute the spell's effect one additional time. Can only pay once. Still counts as playing the spell once.
+NEW RULE: Control of abilities on chain is independent of their source object's control.
+Clarified: Priority is the singular exclusive right to take discretionary actions during closed state. Having focus without priority does NOT grant right to take discretionary actions. Gaining priority either creates it or removes it from current holder.
+Clarified: Deathknell now fully defined and functional. New steps added to Cleanups, Kill action, and Deathknell keyword.
+Clarified: Removal of Contested status is NOT part of Special Cleanup at end of combat.
+NEW: Rules added for when showdowns/combats CEASE to be staged.
+NEW: By default, units can be played to their base or to a battlefield they control. Specific cards may expand/restrict this.
+NEW GAME ACTIONS: Double (doubles a unit's Might for a duration) and Swap (swaps two units' Mights).
+
+═══════════════════════════════════════════════════════
+RIFTBOUND CORE RULES PATCH NOTES — UNLEASHED (2026-03-30)
+═══════════════════════════════════════════════════════
+NEW SYSTEM: XP. Players gain XP and spend it like energy/power. Hunt keyword: gives controller 1 XP when unit with Hunt conquers or holds (higher Hunt Value = more XP). Level keyword: dependent keyword, ability becomes active when controller has specified XP amount.
+NEW SYSTEM: [>] symbol. Dependent and permissive keywords (Reaction, Action, Deathknell, Level, Legion) now appear before the ability with [>] indicating which ability they modify. In written text: [>].
+NEW SYSTEM: Dependent Keywords. A keyword + condition, with a dependent ability active while condition met, inactive otherwise. Legion updated to use this system.
+NEW KEYWORD: Ambush. Two passive abilities: "I may be played to a battlefield where you control Units" AND "I have [Reaction] as long as I'm being played to a battlefield where you control Units." New rule: if a card's conditional permissive ability could be fulfilled when placed on chain, it can be played — but if it doesn't fulfill the condition by Check Legality step, it's undone and returned to its zone.
+CLARIFIED WIN CONDITION: A player wins during a cleanup if they have points >= Victory Score AND more points than any opponent. Both must be true simultaneously. If a player gains 2+ points from Burn Outs in sequence fulfilling this, they win immediately without waiting for cleanup.
+NEW SHOWDOWN/COMBAT RULES: Showdowns staged at contested battlefields. Combats staged at contested battlefields with units from opposing players. If turn player initiates showdown at battlefield where combat is staged, it opens as combat showdown. Non-combat showdown can become combat showdown in next cleanup if combat gets staged there.
+NEW COMBAT RESOLUTION: After Combat Cleanup (units healed, attackers recalled), determine winner/loser. If units from both players remain or none remain = no result. Player with units remaining wins. Then conquer if applicable. Then lose attacker/defender designations. "This combat" effects expire.
+COMBAT WIN/LOSS DEFINED: After combat damage: if neither or both players have units remaining = TIE (attackers recalled if both). If only one player has units remaining = that player WINS, other LOSES. You can win combat you didn't start (defense wins).
+IMPORTANT "MAY" TRIGGER CHANGE: Triggered abilities that say "you may" as first part of their effect are NOW optional to place on chain (controller chooses whether to place them). Triggered abilities with costs within instructions (format: "[do X] to [do Y]") have that cost treated as base cost of the triggered ability — must be paid to finalize.
+NEW GAME ACTION: Replace. Replaced object goes to Banishment. Replacing token inherits all effects/statuses. Objects may be swapped back.
+NEW GAME ACTION: Create. Token immediately generated in appropriate zone without using chain.
+CODIFIED: Predict (look at top N cards of Main Deck, recycle any, put rest back in any order).
+NEW SYSTEM: Copy Effects. Copies copy "copyable traits" = all printed or previously copied traits. Nothing appended or granted. Copies of copies copy the original.
+NEW SYSTEM: HOT FEPR. Handle Outstanding Tasks first, THEN Finalize Execute Pass Resolve. Tasks = cleanups, start-of-turn procedures, combat procedures, end-of-turn procedures. When tasks are outstanding, FEPR is paused.
+CLEANUP CHANGE: Finalization removed from cleanup and is now part of HOT FEPR. Combat designations assigned/removed BEFORE units die from damage in normal cleanup.
+ENDING PHASE: Previously "End of Turn Phase", now "Ending Phase". Expiration Step now loops: if any items underwent FEPR during Expiration Step, return to start of Expiration Step.
+REPLACEMENT EFFECTS EXPANDED: Controller of replacement effect = controller of its source. If event replaced by RE would be modified by a game effect, RE inherits those modifications. Multiple simultaneous events: controller of RE decides order of application. Each RE can only be applied in one uninterrupted sequence.
+BATTLEFIELD CONTROL: Control locked by presence of combat or showdown (not contested status). Control CANNOT be lost while item is on chain (supports new Unleashed cards).
+NEW: Responsibility. A player is responsible for a game action if they performed it or were assigned responsibility. For "when you kill a unit with a spell" = player must be responsible for kill, control the spell, and spell must have attribution.
+NEW: Linked Instructions. If later linked instruction depends on earlier one executing — if earlier ignored, later also ignored. If game action in earlier linked instruction is replaced, does NOT affect later linked instruction.
+NEW: Linked Abilities defined.
+NEW: Referents. Words like "here", "my", "its" in spells/activated abilities checked on execution. In triggered abilities that reference trigger condition, that info checked when trigger fires and ability placed on chain.
+NEW SYSTEM: Additional Turns. When additional turn created, inserted directly after current turn. Turn order unaffected. After additional turn finishes, removed from queue.
+NEW GAME ACTION: Prevent. Creates pool of prevented damage as delayed replacement effect (shield on affected units).
+CLARIFIED DISCOUNTS: Discounts that only affect a component of a cost apply when that component is added, before other discounts.
+RENAMED: Action Phase → Main Phase.
+NEW KEYWORD: Unique (formerly card text on 3 Spiritforged cards, now has rules entry).
+NEW KEYWORD: Backline. Unit must be assigned combat damage after any other friendly unit without Backline.
+ATTACHMENT CLARIFICATION: Attaching to a new card detaches from current. Attaching to current card does nothing.
+
+═══════════════════════════════════════════════════════
+ORIGINS CARD ERRATA (2025-10-28) — OFFICIAL CURRENT TEXT
+═══════════════════════════════════════════════════════
+Ava Achiever: "When I attack, you may pay [C] to play a card with [Hidden] from your hand, ignoring its cost. If it's a unit, play it here."
+Baited Hook: "[1][C], [E]: Kill a friendly unit. Look at the top 5 cards of your Main Deck. You may banish a unit from among them that has Might up to 1 more than the killed unit and play it, ignoring its cost. Then recycle the rest."
+Blind Fury: "[Action] Each opponent reveals the top card of their Main Deck. Choose one and banish it, then play it, ignoring its cost. Then recycle the rest."
+Clockwork Keeper: "You may pay [C] as an additional cost to play me. When you play me, if you paid the additional cost, draw 1."
+Convergent Mutation: "[Reaction] Choose a friendly unit. This turn, increase its Might to the Might of another friendly unit." (Now "this turn", was permanent.)
+Dark Child, Starter: "At the end of your turn, ready up to 2 runes." (Was "ready 2 runes" — now optional/up to.)
+Dazzling Aurora: "At the end of your turn, reveal cards from the top of your Main Deck until you reveal a unit and banish it. Play it, ignoring its cost, and recycle the rest." (Now banishes before playing.)
+Disintegrate: "[Action] Deal 3 to a unit at a battlefield. If this kills it, do this: draw 1." (Reflexive trigger added for draw.)
+Dragon's Rage: "Move an enemy unit. Then do this: Choose another enemy unit at its destination. They deal damage equal to their Mights to each other." (Reflexive trigger added.)
+Dune Drake: "When I attack, give me +2 [M] this turn if there is a ready enemy unit here." (Added "this turn".)
+Highlander: "[Reaction] Choose a friendly unit. The next time it would die this turn, heal it, exhaust it, and recall it instead."
+Karma, Channeler: "When you recycle one or more cards to your Main Deck, buff a friendly unit." (Added "to your Main Deck" restriction.)
+Kinkou Monk: "When you play me, buff up to two other friendly units."
+Nocturne, Horrifying: "[Ganking] As you look at or reveal me from the top of your deck, you may banish me. If you do, you may play me for [A]."
+Pack of Wonders: "[E]: Return another friendly gear, unit, or facedown card to its owner's hand."
+Portal Rescue: "[Action] Banish a friendly unit, then its owner plays it to their base, ignoring its cost."
+Promising Future: "Each player looks at the top 5 cards of their Main Deck, banishes one of them, then recycles the rest. Starting with the next player, each player plays those cards, ignoring Energy costs." (Now banishes before playing.)
+Ravenborn Tome: "[E]: The next spell you play this turn deals 1 Bonus Damage." (Added "this turn".)
+Salvage: "[Action] You may kill up to one gear. Draw 1."
+Sigil of the Storm: "When you conquer here, you must recycle one of your runes. (This doesn't choose anything.)"
+Sona, Harmonious: "At the end of your turn, if I'm at a battlefield, ready up to 4 friendly runes."
+Targon's Peak: "When you conquer here, ready up to 2 runes at the end of this turn."
+Teemo, Strategist: "When I defend, choose an enemy unit here and reveal the top 5 cards of your Main Deck. Deal 1 to that unit for each card with [Hidden] revealed this way, then recycle the revealed cards."
+The Boss: "If a buffed unit you control would die, you may pay [C], exhaust me, and spend its buff to heal it, exhaust it, and recall it instead. When you conquer, ready me."
+The Dreaming Tree (BANNED): "When a player chooses a friendly unit here with a spell for the first time each turn, they draw 1."
+The Syren: "[1], [E]: Move a friendly unit at a battlefield to its base."
+Tideturner: "When you play me, you may choose a unit you control at another location. Move me to its location and it to my original location." (Changed from "friendly unit" to "unit you control".)
+Unforgiven: "[2], [E]: Move a friendly unit to or from its base."
+Unlicensed Armory: "Discard 1, [E]: Choose a friendly unit. The next time it would die this turn, you may pay [C] to heal it, exhaust it, and recall it instead."
+Void Gate (BANNED): "Spells and abilities deal 1 Bonus Damage to units here."
+Zhonya's Hourglass: "[Hidden] If a friendly unit would die, kill this instead. Heal that unit, exhaust it, and recall it." (Removed "next time" — now applies to ANY friendly unit death while Hourglass is in play. No longer restricts to battlefield it was hidden at.)
+
+═══════════════════════════════════════════════════════
+SPIRITFORGED + ORIGINS ERRATA (2026-01-14) — OFFICIAL CURRENT TEXT
+═══════════════════════════════════════════════════════
+Falling Star: "Deal 3 to a unit. Deal 3 to a unit. (You can choose different units.)" — NO LONGER a reflexive trigger. Both instances chosen upfront, resolve normally.
+Icathian Rain: "Deal 2 to a unit." (x6, you can choose different units) — NO LONGER a reflexive trigger.
+Reinforce: "Look at the top 5 cards of your Main Deck. You may banish a unit from among them, then play it, reducing its cost by [5]. Recycle the remaining cards."
+Arise! (SFD): "Play a 2 [M] Sand Soldier unit token for each Equipment you control. Then do this: Ready up to two of them."
+Blood Rush (SFD): "[Action] [Repeat][1] Give a unit [Assault 2] this turn."
+Deathgrip (SFD): "[Reaction] Kill a friendly unit. If you do, give +[M] equal to its Might to another friendly unit this turn. Draw 1." (Kill is a target not a cost; if it doesn't die, no Might is given. Still draw 1.)
+Edge of Night (SFD): "[Hidden] When you play this from face down, attach it to a unit you control (here). [Equip][C]"
+Janna, Savior (SFD): "[Reaction] When you play me, heal your units here, then move up to one enemy unit from here to its base." (Can now heal without enemy present.)
+Jax, Unmatched (SFD): "[Deflect] Your Equipment everywhere have [Quick-Draw]." (Was "in your hand" — now all Equipment you control anywhere.)
+Kato the Arm (SFD): "When I move to a battlefield, give another friendly unit my keywords and +[M] equal to my Might this turn." (Added "another" — can't target himself.)
+Rek'Sai, Swarm Queen (SFD): "When I attack, you may reveal the top 2 cards of your Main Deck. You may banish one, then play it. If it is a unit, you may play it here. Recycle the rest."
+Rell, Magnetic (SFD): "[Tank] When I attack, you may play an Equipment with Energy cost no more than [2], ignoring its cost. If you do, then do this: Attach it to me."
+Tianna Crownguard (SFD): "[Deflect] While I'm at a battlefield, opponents can't gain points." (NOT "score points" — doesn't prevent conquering/holding process, only gaining the points. Conquer/hold triggers still fire. Final Point draw-1 replacement still applies.)
+Void Burrower (SFD): "When you conquer, you may exhaust me to reveal the top 2 cards of your Main Deck. You may banish one, then play it. Recycle the rest."
+Void Rush (SFD): "Reveal the top 2 cards of your Main Deck. You may banish one, then play it, reducing its cost by [2]. Draw any you didn't banish."
+Yone, Blademaster (SFD): "When I conquer a battlefield that was uncontrolled, deal damage equal to my Might to an enemy unit in a base." (Triggers on battlefields that were uncontrolled at time of conquering, including "surprise defense" scenarios.)
+DEFLECT RULES ERRATA: "It is functionally short for 'Spells and abilities an opponent controls that choose me cost an amount of Power equal to [Deflect Value] more to play as an additional cost for each time they choose me.'" This means Deflect is paid once PER CHOICE, not once per spell/ability. Relevant for Repeat spells and multi-target effects.
+
+═══════════════════════════════════════════════════════
+UNLEASHED ERRATA (2026-04-03) — OFFICIAL CURRENT TEXT
+═══════════════════════════════════════════════════════
+Guards! (SFD): "[Hidden] Play a 2 [M] Sand Soldier unit token. Then do this: You may pay [C] to ready it." (Reflexive trigger added for ready step.)
+Relentless Pursuit (SFD): "[Action] Move a friendly unit. You may attach up to one Equipment with the same controller to it. This turn, that unit has 'When I conquer, you may move me to my base.'"
+Death from Below (UNL): "Kill a unit at a battlefield. Then, if it had 3 [M] or less, do this: You may play this from your trash for [A]."
+Bone Skewer (UNL): "[Hidden] Choose a battlefield. An opponent reveals their hand. You may choose a unit from it. They play that unit to that battlefield, ignoring any and all costs. If they do, then do this: [Stun] it."
+LeBlanc, Deceiver (UNL): "When you conquer or hold, you may discard 1 and exhaust me to play a ready Reflection unit token there. Then do this: It becomes a copy of another unit there. Give it [Temporary]."
+Mirror Image (UNL): "Choose a unit. Play a ready Reflection unit token to your base. Then do this: It becomes a copy of that unit. Give it [Temporary]."
+Keeper of Masks (UNL): "[Hidden][Temporary] When you play me, play two Reflection unit tokens here. Then do this: They become copies of me."
+Rengar, Trophy Hunter (UNL): "[Ambush] I can [Ambush] to a battlefield where there are enemy units, even if you don't have units there." (Replaces "I can be played to a battlefield where there are enemy units".)
+
+═══════════════════════════════════════════════════════
+SPIRITFORGED FAQ — KEY RULINGS (2026-01-14)
+═══════════════════════════════════════════════════════
+DEFLECT (RULES ERRATA): Deflect cost is paid once PER CHOICE, not once per spell. This matters for Repeat (pay Deflect twice if choosing same target twice) and for Falling Star / Icathian Rain.
+
+CARDS THAT PLAY FROM DECK: When a spell instructs playing a card from your deck, it should be banished first before playing. This ensures the game has a zone to track it. This applies to Promising Future, Blind Fury, Rek'Sai, Void Burrower, Void Rush, Reinforce, etc.
+
+REFLEXIVE TRIGGERS ON SPIRITFORGED CARDS: Cards with "do this:" or "If you do, then do this:" create reflexive triggers that add new chain items. Players can react between the first effect and the second.
+
+BLOOD RUSH: Adds "this turn" — Assault 2 is not permanent.
+
+DEATHGRIP: Kill is a target, not a cost. Chosen upfront. If kill doesn't happen (mistarget, replaced), no Might is given. Draw 1 still happens regardless.
+
+EDGE OF NIGHT: Works as written — attaches to a unit "here" at the battlefield where played from facedown.
+
+JANNA, SAVIOR: Can heal units without enemy present ("up to one" enemy unit — can choose zero).
+
+JAX, UNMATCHED: Grants Quick-Draw to Equipment you control EVERYWHERE (hand, board, etc.).
+
+KATO THE ARM: Cannot give keywords/Might to himself. Must be "another" friendly unit.
+
+TIANNA CROWNGUARD: Does NOT prevent the process of conquering/holding. Conquer/hold triggers still fire. Players can still conquer and gain control. The Final Point card-draw replacement (8th point) still applies. Only prevents the POINTS from registering. Forgotten Monument is different — it completely prevents the scoring process including triggers.
+
+YONE, BLADEMASTER: Triggers when he conquers a battlefield that was uncontrolled AT TIME OF CONQUERING. Works in "surprise defense" (defending uncontrolled battlefield).
+
+DRAVEN, AUDACIOUS: After combat damage — if neither/both players have units remaining = TIE (attackers recalled if both). If only one player has units = that player WINS. Draven triggers if he's among surviving units. You can win combat on offense or defense. Win via spells before combat damage still counts. Draven triggers and resolves BEFORE gaining regular conquer point and BEFORE conquer effects.
+
+PICKPOCKET: Can kill Gold tokens. Token costs treated as 0 for all purposes.
+
+RUMBLE, HOTHEADED: Can recycle Mech tokens. Tokens "inherit" recycle destination of their type. A token unit/gear is recycled to Main Deck, then ceases to exist, but it "counts" as the unit recycled and Rumble can check its Might.
+
+SVELLSONGUR: Only copies PRINTED text of the unit. Does not copy granted/appended text. Does not copy text from other Equipment attached to same unit. Multiple Svellsongur on same unit = that many additional copies of printed abilities.
+
+EZREAL, PRODIGY: Reduces optional additional costs only (must use both "additional cost" AND "may"). Reduces Repeat and Accelerate costs. Does NOT reduce Equip costs (activation cost, not additional). Does NOT reduce Deflect costs (Deflect is mandatory, not optional).
+
+HOSTILE TAKEOVER: Moving an opponent's unit to your control at their battlefield = start a noncombat showdown. Opponent loses control in same cleanup that begins the showdown.
+
+WEAPONMASTER: Always optional (reminder text accurate). May choose whether to use this play ability.
+
+NEGATIVE MIGHT: Units can survive with 0 or negative Might. They do NOT automatically die. They die if they take any damage (minimum 1 damage to kill). In combat, negative Might = 0 contribution to damage. For raising back above 0, actual negative value is used (so -3 Might unit needs +4 to reach 1 Might).
+
+REPEATED FIND YOUR CENTER WITH TEMPORAL PORTAL: Repeat causes repetition of "instructions" (resolution effects). Cost reduction from Find Your Center applies once (not twice). Final cost = base (3) + Repeat cost (3) - reduction (2) = 4. Repeat cost is not reduced even when base cost is, because card cost lookups return printed cost.
+`;
+
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+let apiKey = localStorage.getItem('rb_judge_api_key') || '';
+let conversationHistory = [];
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (apiKey) {
+    document.getElementById('apiKeyInput').value = apiKey;
+    updateApiStatus('API key loaded from storage.', 'ok');
+  }
+});
+
+function saveKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val.startsWith('sk-')) {
+    updateApiStatus('Invalid key format. Should start with sk-ant-...', 'err');
+    return;
+  }
+  apiKey = val;
+  localStorage.setItem('rb_judge_api_key', apiKey);
+  updateApiStatus('API key saved successfully.', 'ok');
+}
+
+function updateApiStatus(msg, type) {
+  const el = document.getElementById('apiStatus');
+  el.textContent = msg;
+  el.className = 'api-status' + (type ? ` ${type}` : '');
+}
+
+// ─── CARD DETECTION & FETCHING ────────────────────────────────────────────────
+async function fetchCardText(cardName) {
+  try {
+    const url = `https://api.riftcodex.com/cards/name?fuzzy=${encodeURIComponent(cardName)}&size=1`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.items || data.items.length === 0) return null;
+    const card = data.items[0];
+    const attrs = card.attributes || {};
+    const cls = card.classification || {};
+    const txt = card.text || {};
+    let info = `CARD: ${card.name}`;
+    if (cls.supertype) info += ` [${cls.supertype}]`;
+    if (cls.type) info += ` — ${cls.type}`;
+    if (cls.domain && cls.domain.length) info += ` | Domain: ${cls.domain.join('/')}`;
+    if (attrs.energy !== undefined) info += ` | Cost: ${attrs.energy}`;
+    if (attrs.might !== undefined) info += ` | Might: ${attrs.might}`;
+    if (card.tags && card.tags.length) info += ` | Tags: ${card.tags.join(', ')}`;
+    info += ` | Set: ${card.set?.label || 'Unknown'}`;
+    if (txt.plain) info += `\nRules Text: ${txt.plain}`;
+    return { name: card.name, info };
+  } catch {
+    return null;
+  }
+}
+
+// Extract probable card names from user text (capitalized multi-word phrases)
+function extractCardNames(text) {
+  const candidates = [];
+  // Match capitalized multi-word names (like "Yasuo, Remorseful" or "Zhonya's Hourglass")
+  const patterns = [
+    /\b([A-Z][a-z']+(?:,\s[A-Z][a-z]+)?)\b/g,
+    /\b([A-Z][a-z']+\s[A-Z][a-z']+(?:\s[A-Z][a-z']+)?)\b/g,
+  ];
+  
+  const seen = new Set();
+  for (const pattern of patterns) {
+    let m;
+    while ((m = pattern.exec(text)) !== null) {
+      const name = m[1].trim();
+      // Filter out common non-card capitalized words
+      const skip = ['The', 'When', 'If', 'While', 'As', 'In', 'At', 'For', 'On', 'With', 'From', 
+                     'How', 'What', 'Does', 'Can', 'Do', 'Is', 'Are', 'My', 'Your', 'Their',
+                     'Neutral', 'Open', 'Closed', 'Main', 'Rune', 'Turn', 'Base', 'Chain', 
+                     'Showdown', 'Combat', 'Cleanup', 'Phase', 'Step', 'Board', 'Deck',
+                     'Battlefield', 'Battlefields', 'Legend', 'Champion', 'Chosen', 'Domain',
+                     'Golden', 'Silver', 'Rule', 'Rules', 'Card', 'Cards', 'Gear', 'Unit', 
+                     'Units', 'Spell', 'Spells', 'Token', 'Tokens'];
+      if (!skip.includes(name) && name.length > 3 && !seen.has(name.toLowerCase())) {
+        seen.add(name.toLowerCase());
+        candidates.push(name);
+      }
+    }
+  }
+  return [...new Set(candidates)].slice(0, 6); // max 6 lookups
+}
+
+// ─── SYSTEM PROMPT ─────────────────────────────────────────────────────────────
+function buildSystemPrompt(cardContext) {
+  return `You are an expert Riftbound judge assistant with deep knowledge of all official Riftbound rules. You have the authority and expertise of a certified head judge.
+
+Your role is to answer complex, nuanced rules questions with precision and confidence. The person asking is already a certified Riftbound judge, so you may use technical terminology freely and skip basic explanations. Focus on the nuanced reasoning.
+
+When answering:
+- Lead with the ruling/answer directly
+- Cite specific rule numbers when relevant (e.g., "per rule 359.3.e.4...")
+- Explain the reasoning chain clearly
+- Note any edge cases or exceptions
+- If a situation is ambiguous, explain why and give the most defensible ruling
+- Keep responses focused and judge-appropriate (not tutorial-level)
+
+You have access to the complete official rules documents below.
+
+═══════════════════════════════════════════════════════
+RIFTBOUND CORE RULES (Official, v2026-03-30)
+═══════════════════════════════════════════════════════
+${CORE_RULES}
+
+═══════════════════════════════════════════════════════
+RIFTBOUND TOURNAMENT RULES (Official, v2026-03-30)
+═══════════════════════════════════════════════════════
+${TOURNAMENT_RULES_SUMMARY}
+
+═══════════════════════════════════════════════════════
+PATCH NOTES, ERRATA & FAQ (All Sets — Most Recent Official)
+═══════════════════════════════════════════════════════
+${PATCH_NOTES_AND_ERRATA}
+
+${cardContext ? `═══════════════════════════════════════════════════════
+RELEVANT CARD DATA (fetched from Riftcodex)
+═══════════════════════════════════════════════════════
+${cardContext}` : ''}
+
+IMPORTANT: When card text from Riftcodex conflicts with errata listed above, the errata takes precedence — it represents the official current wording. Always apply the most recent errata when ruling on a card.
+
+Answer the judge's question with precision. If card text was fetched above, use it in your analysis. Always reason from the rules first, then card text.`;
+}
+
+// ─── SIMPLE MARKDOWN RENDERER ─────────────────────────────────────────────────
+function renderMarkdown(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/(rule\s+\d+[\d.a-z]*)/gi, '<span class="rule-ref">$1</span>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>')
+    .replace(/^/, '<p>').replace(/$/, '</p>');
+}
+
+// ─── CHAT RENDERING ─────────────────────────────────────────────────────────
+function addMessage(role, content, extra) {
+  const chatArea = document.getElementById('chatArea');
+  const emptyState = document.getElementById('emptyState');
+  if (emptyState) emptyState.remove();
+
+  const msg = document.createElement('div');
+  msg.className = `msg ${role}`;
+
+  const labels = { user: 'YOUR QUESTION', assistant: 'JUDGE RULING', 'system-msg': 'SYSTEM' };
+  const label = document.createElement('div');
+  label.className = 'msg-label';
+  label.textContent = labels[role] || role.toUpperCase();
+
+  const body = document.createElement('div');
+  body.className = 'msg-body';
+
+  if (role === 'assistant') {
+    body.innerHTML = renderMarkdown(content);
+  } else if (role === 'loading-msg') {
+    msg.className = 'msg assistant loading-msg';
+    label.textContent = 'THINKING';
+    body.innerHTML = '<div class="dots"><span></span><span></span><span></span></div><em style="color:var(--text-dim);font-size:0.9rem">Consulting the rulebook...</em>';
+  } else {
+    body.textContent = content;
+  }
+
+  msg.appendChild(label);
+  msg.appendChild(body);
+
+  if (extra && extra.cards && extra.cards.length > 0) {
+    const pills = document.createElement('div');
+    pills.className = 'cards-fetched';
+    extra.cards.forEach(c => {
+      const pill = document.createElement('div');
+      pill.className = 'card-pill';
+      pill.textContent = c;
+      pills.appendChild(pill);
+    });
+    msg.appendChild(pills);
+  }
+
+  chatArea.appendChild(msg);
+  chatArea.scrollTop = chatArea.scrollHeight;
+  return msg;
+}
+
+// ─── MAIN QUESTION HANDLER ────────────────────────────────────────────────────
+async function askQuestion() {
+  const input = document.getElementById('questionInput');
+  const question = input.value.trim();
+  if (!question) return;
+  if (!apiKey) {
+    updateApiStatus('Please enter and save your API key first.', 'err');
+    document.getElementById('apiKeyInput').focus();
+    return;
+  }
+
+  const btn = document.getElementById('askBtn');
+  btn.disabled = true;
+  input.value = '';
+
+  // Show user message
+  addMessage('user', question);
+
+  // Extract and fetch card names
+  const cardNames = extractCardNames(question);
+  let cardContext = '';
+  let fetchedCards = [];
+
+  if (cardNames.length > 0) {
+    const results = await Promise.all(cardNames.map(fetchCardText));
+    results.forEach((r, i) => {
+      if (r) {
+        cardContext += r.info + '\n\n';
+        fetchedCards.push(r.name);
+      }
+    });
+  }
+
+  // Show loading
+  const loadingMsg = addMessage('loading-msg', '');
+
+  // Build conversation
+  conversationHistory.push({ role: 'user', content: question });
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-6',
+        max_tokens: 2048,
+        system: buildSystemPrompt(cardContext),
+        messages: conversationHistory
+      })
+    });
+
+    loadingMsg.remove();
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      const msg = err?.error?.message || `HTTP ${response.status}`;
+      addMessage('system-msg', `Error: ${msg}`);
+      conversationHistory.pop();
+      btn.disabled = false;
+      return;
+    }
+
+    const data = await response.json();
+    const answer = data.content?.[0]?.text || '(No response)';
+
+    conversationHistory.push({ role: 'assistant', content: answer });
+
+    addMessage('assistant', answer, { cards: fetchedCards });
+
+  } catch (err) {
+    loadingMsg.remove();
+    addMessage('system-msg', `Network error: ${err.message}. Check your API key and internet connection.`);
+    conversationHistory.pop();
+  }
+
+  btn.disabled = false;
+  input.focus();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    askQuestion();
+  }
+}
+
+function clearChat() {
+  conversationHistory = [];
+  const chatArea = document.getElementById('chatArea');
+  chatArea.innerHTML = `
+    <div class="empty-state" id="emptyState">
+      <div class="empty-glyph">⚖</div>
+      <div class="empty-text">ASK A JUDGE QUESTION<br>Card names are looked up automatically</div>
+    </div>`;
+}
+</script>
+</body>
+</html>
