@@ -2,5 +2,5 @@
 (designed for internal use at Beifong's Hit-House only)
 
 
-## [TCGCSV-Shopify.html](https://beifongshopmail-cpu.github.io/bhh-tools/TCGCSV-Shopify.html)
+## [BHH-RB-IPT.html](https://beifongshopmail-cpu.github.io/bhh-tools/BHH-RB-IPT.html)
 Matches a TCGCSV CSV against a Shopify products export to generate a price update CSV, new product(s) import CSV, and image enrichment CSV.
