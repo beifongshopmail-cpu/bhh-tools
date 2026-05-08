@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BHH-RB-IPT — Beifong's Hit-House Riftbound Import & Pricing Tool</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Rajdhani:wght@300;400;500;600&display=swap');
+  :root {
+    --bg: #0a0c12; --surface: #111420; --surface2: #181c2a; --border: #2a3050;
+    --accent: #c8a84b; --accent2: #7b5ea7; --text: #d4daf0; --text-dim: #6a7299;
+    --success: #4caf82; --error: #e05555; --warning: #e09a30; --rift: #5b8dee;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 16px; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 50% at 20% 0%, rgba(91,141,238,0.07) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(123,94,167,0.07) 0%, transparent 60%); pointer-events: none; z-index: 0; }
+  .wrapper { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+  .header { text-align: center; margin-bottom: 36px; }
+  .header-badge { display: inline-block; background: linear-gradient(135deg, rgba(200,168,75,0.15), rgba(200,168,75,0.05)); border: 1px solid rgba(200,168,75,0.3); color: var(--accent); font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 3px; padding: 5px 16px; border-radius: 2px; margin-bottom: 20px; text-transform: uppercase; }
+  .header h1 { font-family: 'Cinzel', serif; font-size: clamp(24px, 4vw, 38px); font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 10px; }
+  .header h1 span { color: var(--accent); }
+  .header p { color: var(--text-dim); font-size: 15px; max-width: 580px; margin: 0 auto; line-height: 1.6; }
+  .divider { display: flex; align-items: center; gap: 16px; margin: 36px 0; color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px; margin-bottom: 20px; }
+  .card-title { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+  .card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .config-grid { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+  input[type="text"] { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 15px; padding: 10px 14px; transition: border-color 0.2s; outline: none; width: 100%; }
+  input[type="text"]:focus { border-color: var(--accent); }
+  .field-hint { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 4px 0; }
+  .toggle-row .toggle-label { flex: 1; }
+  .toggle-row .toggle-label-title { font-size: 14px; color: var(--text); font-weight: 500; margin-bottom: 2px; }
+  .toggle-row .toggle-label-hint { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+  .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background: var(--surface2); border: 1px solid var(--border); transition: 0.25s; border-radius: 24px; }
+  .slider:before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background-color: var(--text-dim); transition: 0.25s; border-radius: 50%; }
+  .switch input:checked + .slider { background: rgba(200,168,75,0.2); border-color: var(--accent); }
+  .switch input:checked + .slider:before { transform: translateX(20px); background-color: var(--accent); }
+  .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .upload-grid { grid-template-columns: 1fr; } }
+  .upload-zone { border: 2px dashed var(--border); border-radius: 8px; padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.25s; position: relative; background: var(--surface2); }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); background: rgba(200,168,75,0.05); }
+  .upload-zone.loaded { border-color: var(--success); border-style: solid; background: rgba(76,175,130,0.05); }
+  .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; padding: 0; border: none; }
+  .upload-icon { font-size: 28px; margin-bottom: 10px; }
+  .upload-label { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 1.5px; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; }
+  .upload-sub { font-size: 12px; color: var(--text-dim); }
+  .upload-filelist { font-size: 12px; color: var(--success); margin-top: 8px; font-weight: 600; text-align: left; line-height: 1.8; }
+  .upload-filelist span { display: block; }
+  .btn-process { width: 100%; padding: 16px; background: linear-gradient(135deg, #c8a84b, #a8862e); border: none; border-radius: 6px; color: #0a0c12; font-family: 'Cinzel', serif; font-size: 15px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.25s; margin-top: 4px; }
+  .btn-process:hover:not(:disabled) { background: linear-gradient(135deg, #dbb84f, #c8a84b); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(200,168,75,0.3); }
+  .btn-process:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  @media (max-width: 500px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  .stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 16px 12px; text-align: center; }
+  .stat-value { font-family: 'Cinzel', serif; font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+  .stat-label { font-size: 11px; letter-spacing: 1px; color: var(--text-dim); text-transform: uppercase; }
+  .stat.updated .stat-value { color: var(--success); }
+  .stat.warned .stat-value  { color: var(--warning); }
+  .stat.skipped .stat-value { color: var(--text-dim); }
+  .stat.total .stat-value   { color: var(--rift); }
+  .stat.new .stat-value     { color: var(--success); }
+  .stat.enriched .stat-value{ color: var(--accent2); }
+  .log-box { background: #070910; border: 1px solid var(--border); border-radius: 6px; padding: 16px; max-height: 360px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.7; }
+  .log-ok, .log-warn, .log-skip, .log-error, .log-info { display: block; }
+  .log-ok { color: var(--success); } .log-warn { color: var(--warning); } .log-skip { color: var(--text-dim); } .log-error { color: var(--error); } .log-info { color: var(--rift); }
+  .log-head { display: block; color: #fff; font-weight: bold; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .btn-download { display: inline-flex; align-items: center; gap: 10px; border-radius: 6px; padding: 12px 24px; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; text-decoration: none; transition: all 0.2s; margin-top: 12px; width: 100%; justify-content: center; }
+  .btn-download.price { background: linear-gradient(135deg, rgba(200,168,75,0.2), rgba(200,168,75,0.1)); border: 1px solid rgba(200,168,75,0.4); color: var(--accent); }
+  .btn-download.price:hover { background: linear-gradient(135deg, rgba(200,168,75,0.3), rgba(200,168,75,0.18)); border-color: var(--accent); transform: translateY(-1px); }
+  .btn-download.new-products { background: linear-gradient(135deg, rgba(76,175,130,0.2), rgba(76,175,130,0.1)); border: 1px solid rgba(76,175,130,0.4); color: var(--success); }
+  .btn-download.new-products:hover { background: linear-gradient(135deg, rgba(76,175,130,0.3), rgba(76,175,130,0.18)); border-color: var(--success); transform: translateY(-1px); }
+  .btn-download.enrichment { background: linear-gradient(135deg, rgba(123,94,167,0.2), rgba(123,94,167,0.1)); border: 1px solid rgba(123,94,167,0.4); color: var(--accent2); }
+  .btn-download.enrichment:hover { background: linear-gradient(135deg, rgba(123,94,167,0.3), rgba(123,94,167,0.18)); border-color: var(--accent2); transform: translateY(-1px); }
+  .download-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .download-instructions { background: rgba(200,168,75,0.07); border: 1px solid rgba(200,168,75,0.2); border-radius: 6px; padding: 14px 18px; margin-top: 14px; font-size: 13px; line-height: 1.7; color: var(--text-dim); }
+  .download-instructions strong { color: var(--accent); display: block; margin-bottom: 4px; }
+  .hidden { display: none; }
+  #results { margin-top: 8px; }
+  .log-box::-webkit-scrollbar { width: 6px; }
+  .log-box::-webkit-scrollbar-track { background: transparent; }
+  .log-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .info-bar { font-size: 12px; color: var(--text-dim); padding: 8px 14px; background: var(--surface2); border-radius: 4px; border-left: 3px solid var(--rift); margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="header">
+    <div class="header-badge">Beifong's Hit-House</div>
+    <h1>Riftbound <span>Import &amp; Pricing</span></h1>
+    <p>Drop one or more TCGCSV exports plus your Shopify product CSV. Set codes are detected from groupId. Generates price update, image enrichment, and new product CSVs. Quantities are never touched.</p>
+  </div>
+
+  <!-- OPTIONS -->
+  <div class="card">
+    <div class="card-title">Options</div>
+    <div class="config-grid">
+      <div class="field">
+        <label>USD → CAD Rate</label>
+        <input type="text" id="cadRate" value="1.38" placeholder="e.g. 1.38">
+        <span class="field-hint">Set to 1 to disable conversion. Applied before rounding.</span>
+      </div>
+      <div class="field">
+        <label>Notable Change Threshold (%)</label>
+        <input type="text" id="notableThreshold" value="30" placeholder="30">
+        <span class="field-hint">Cards changing by ≥ this % flagged separately in log.</span>
+      </div>
+    </div>
+    <div style="height:14px"></div>
+    <div class="toggle-row">
+      <div class="toggle-label">
+        <div class="toggle-label-title">Skip Metal cards</div>
+        <div class="toggle-label-hint">Hides (Metal) and (Metal) (Prize Wall) variants from output. Rare event-prize cards rarely sold online.</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="skipMetals" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- FILE UPLOADS -->
+  <div class="card">
+    <div class="card-title">Source Files</div>
+    <div class="upload-grid">
+      <div>
+        <div class="upload-label" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin-bottom:8px;">① TCGCSV Export(s)</div>
+        <div class="upload-zone" id="zone-tcgcsv">
+          <input type="file" id="file-tcgcsv" accept=".csv" multiple onchange="handleTcgcsvFiles(this)">
+          <div class="upload-icon">📊</div>
+          <div class="upload-label">Drop CSV(s) here</div>
+          <div class="upload-sub">One or more TCGCSV set exports</div>
+          <div class="upload-filelist" id="list-tcgcsv"></div>
+        </div>
+      </div>
+      <div>
+        <div class="upload-label" style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin-bottom:8px;">② Shopify Products Export</div>
+        <div class="upload-zone" id="zone-shopify">
+          <input type="file" id="file-shopify" accept=".csv" onchange="handleShopifyFile(this)">
+          <div class="upload-icon">🏪</div>
+          <div class="upload-label">Drop CSV here</div>
+          <div class="upload-sub">Admin → Products → Export → CSV for Excel</div>
+          <div class="upload-filelist" id="list-shopify"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-process" id="btn-run" onclick="runSync()" disabled>Generate CSVs</button>
+
+  <!-- RESULTS -->
+  <div id="results" class="hidden">
+    <div class="divider">Results</div>
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat updated"><div class="stat-value" id="stat-updated">0</div><div class="stat-label">Prices Updated</div></div>
+      <div class="stat warned"><div class="stat-value" id="stat-warned">0</div><div class="stat-label">Warnings</div></div>
+      <div class="stat skipped"><div class="stat-value" id="stat-skipped">0</div><div class="stat-label">Skipped</div></div>
+      <div class="stat total"><div class="stat-value" id="stat-total">0</div><div class="stat-label">TCGCSV Rows</div></div>
+      <div class="stat new"><div class="stat-value" id="stat-new">0</div><div class="stat-label">New Products</div></div>
+      <div class="stat enriched"><div class="stat-value" id="stat-enriched">0</div><div class="stat-label">Enriched</div></div>
+    </div>
+    <div class="log-box" id="logBox"></div>
+    <div id="download-area"></div>
+  </div>
+
+</div>
+<script>
+// ═════════════════════════════════════════════════════════════════════════════
+// SET CODE MAP — UPDATE WHEN NEW SETS RELEASE
+// ═════════════════════════════════════════════════════════════════════════════
+// Each TCGCSV "group" (set or promo collection) maps here. groupId comes
+// directly from the row's 'groupId' column in the CSV. The 'isPromo' flag
+// determines how the set code is assigned:
+//   - false (single-set group): every card in the file uses this set code
+//   - true (promo group): set code is inferred from the card's /total in
+//     extNumber, because promos belong to whichever base set they reference
+//
+// To add a new set:
+//   1. Find groupId at https://tcgcsv.com/tcgplayer/89/groups
+//   2. Add a new entry below
+//   3. If a base set, also add its number-total to PROMO_TOTAL_MAP below
+// ═════════════════════════════════════════════════════════════════════════════
+const GROUP_MAP = {
+  // Base sets (single-set groups)
+  '24344': { code: 'OGN', name: 'Origins',                isPromo: false },
+  '24439': { code: 'OGS', name: 'Origins: Proving Grounds', isPromo: false },
+  '24519': { code: 'SFD', name: 'Spiritforged',           isPromo: false },
+  '24560': { code: 'UNL', name: 'Unleashed',              isPromo: false },
+  // Promo groups (cards belong to whatever base set their /total references)
+  '24343': { code: 'PR',  name: 'Riftbound Promotional Cards',                  isPromo: true },
+  '24528': { code: 'OPP', name: 'Riftbound Organized Play Promotional Cards',   isPromo: true },
+  '24552': { code: 'JDG', name: 'Riftbound Judge Promotional Cards',            isPromo: true },
+  '24502': { code: 'RWB', name: 'Riftbound Worlds Bundle 2025',                 isPromo: true },
+};
+
+// Map a card's /total → base set code (used for promo group rows).
+// Update when new base sets release.
+const PROMO_TOTAL_MAP = {
+  '298': 'OGN',
+  '24':  'OGS',
+  '221': 'SFD',
+  '219': 'UNL',
+};
+
+// Map a rune promo's letter suffix → base set code.
+// Used for promos with no /total like R01b. Update if new promo runs use new letters.
+const RUNE_SUFFIX_MAP = {
+  'b': 'SFD',  // GG EZ / OPP rune promos
+};
+
+// ── CSV PARSER ────────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const rows = [];
+  let i = 0, n = text.length;
+  while (i < n) {
+    const row = [];
+    while (i < n && text[i] !== '\n') {
+      if (text[i] === '"') {
+        i++; let val = '';
+        while (i < n) {
+          if (text[i] === '"' && text[i+1] === '"') { val += '"'; i += 2; }
+          else if (text[i] === '"') { i++; break; }
+          else { val += text[i++]; }
+        }
+        row.push(val);
+        if (text[i] === ',') i++;
+      } else {
+        let val = '';
+        while (i < n && text[i] !== ',' && text[i] !== '\n') val += text[i++];
+        row.push(val.trim());
+        if (text[i] === ',') i++;
+      }
+    }
+    if (text[i] === '\n') i++;
+    if (row.some(c => c !== '')) rows.push(row);
+  }
+  if (rows.length < 2) return [];
+  const headers = rows[0];
+  return rows.slice(1).map(r => {
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h.trim()] = (r[idx] || '').trim(); });
+    return obj;
+  });
+}
+
+function escCSV(v) {
+  v = String(v == null ? '' : v);
+  if (v.includes(',') || v.includes('"') || v.includes('\n')) return '"' + v.replace(/"/g, '""') + '"';
+  return v;
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let tcgcsvData = null, shopifyData = null;
+let tcgcsvFileCount = 0, tcgcsvRowCount = 0;
+let logLines = [];
+
+// ── CONSTANTS ─────────────────────────────────────────────────────────────────
+const CONDITIONS = [
+  { label: 'NM/M',  sku: 'NMM'  },
+  { label: 'LP/MP', sku: 'LPMP' },
+  { label: 'HP',    sku: 'HP'   },
+];
+
+const FOIL_ONLY_RARITIES = new Set(['Rare', 'Epic', 'Showcase']);
+const STANDARD_RARITIES  = new Set(['Common', 'Uncommon', 'Rare', 'Epic', 'Showcase']);
+
+// Card name parentheticals that indicate Metals (skipped by default toggle)
+const METAL_PATTERNS = [/\(Metal\)/i];
+
+// Shopify product import headers — full set, matches existing tool
+const NEW_PRODUCT_HEADERS = [
+  'Handle','Title','Body (HTML)','Vendor','Product Category','Type','Tags',
+  'Published','Option1 Name','Option1 Value','Option2 Name','Option2 Value',
+  'Variant SKU','Variant Grams','Variant Inventory Tracker','Variant Inventory Qty',
+  'Variant Inventory Policy','Variant Fulfillment Service','Variant Price',
+  'Variant Compare At Price','Variant Requires Shipping','Variant Taxable',
+  'Image Src','Image Position','Image Alt Text',
+  'Metafield: custom.card_attributes [single_line_text_field]','Status'
+];
+
+// ── PATTERN HELPERS ───────────────────────────────────────────────────────────
+function isAltArt(extNumber) {
+  // Cards with letter suffix on number portion: 058a/219, 263a/298
+  // Excludes runes (R01a, R01b) which are matched separately
+  if (!extNumber || !extNumber.includes('/')) return false;
+  return /^\d+[a-z]\//i.test(extNumber);
+}
+
+function isOvernumber(extNumber) {
+  // number > total, e.g. 230/219, 300/298
+  if (!extNumber || !extNumber.includes('/')) return false;
+  const cleaned = extNumber.replace('*', '');
+  const parts = cleaned.split('/');
+  const num   = parseInt(parts[0]);
+  const total = parseInt(parts[1]);
+  if (isNaN(num) || isNaN(total)) return false;
+  return num > total;
+}
+
+function isSignature(extNumber) {
+  return (extNumber || '').includes('*');
+}
+
+function isRune(extNumber) {
+  // R01, R02 ... R0X, with optional letter suffix (R01a, R01b)
+  return /^R\d+[a-z]?$/i.test(extNumber || '');
+}
+
+function isToken(extNumber) {
+  // Any number of digits after T: T01, T02 ... T99, T100 if it ever happens
+  return /^T\d+$/i.test(extNumber || '');
+}
+
+function isUltimate(name) {
+  return /\(Ultimate\)/i.test(name || '');
+}
+
+function isMetal(name) {
+  return METAL_PATTERNS.some(p => p.test(name || ''));
+}
+
+// SKU number portion: 058/219 → "058of219", 230*/219 → "230*of219"
+function skuNum(extNumber) { return (extNumber || '').replace('/', 'of'); }
+
+function toHandle(title) {
+  return title.toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// ── PRICING ───────────────────────────────────────────────────────────────────
+function cleanNum(str) {
+  return parseFloat(String(str || '0').replace(/,/g, ''));
+}
+
+function roundPrice(raw) {
+  if (!raw || isNaN(raw) || raw <= 0) return null;
+  if (raw < 1.00) return Math.ceil(raw * 4) / 4;  // nearest $0.25
+  return Math.ceil(raw * 2) / 2;                   // nearest $0.50
+}
+
+function getPriceFromTcgcsv(row, cadRate) {
+  const market = cleanNum(row['marketPrice'] || '0');
+  const low    = cleanNum(row['lowPrice']    || '0');
+  const mid    = cleanNum(row['midPrice']    || '0');
+
+  let usedPrice = market;
+  let fallback  = null;
+
+  if (market > 0 && low > 0 && market < low) {
+    usedPrice = mid > 0 ? mid : low;
+    fallback  = `marketPrice $${market.toFixed(2)} < lowPrice $${low.toFixed(2)} — used ${mid > 0 ? 'midPrice' : 'lowPrice'} $${usedPrice.toFixed(2)} instead`;
+  } else if (!usedPrice || usedPrice <= 0) {
+    usedPrice = mid;
+  }
+
+  if (!usedPrice || usedPrice <= 0) return { price: null, fallback: null };
+  const rounded = roundPrice(usedPrice * cadRate);
+  if (!rounded || rounded <= 0) return { price: null, fallback: null };
+  return { price: rounded, fallback };
+}
+
+// ── LOGGING ───────────────────────────────────────────────────────────────────
+function logAdd(cls, msg) {
+  const safe = msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  logLines.push(`<span class="${cls}">${safe}</span>`);
+}
+
+// ── SET CODE RESOLUTION ───────────────────────────────────────────────────────
+// Returns { code, isPromoGroup } or null if unresolvable
+function resolveSetCode(row) {
+  const groupId = (row['groupId'] || '').trim();
+  const groupInfo = GROUP_MAP[groupId];
+  if (!groupInfo) return null;
+
+  // Single-set groups: every card uses this set code
+  if (!groupInfo.isPromo) {
+    return { code: groupInfo.code, isPromoGroup: false };
+  }
+
+  // Promo groups: infer from extNumber's /total or rune suffix
+  const extNumber = (row['extNumber'] || '').trim();
+
+  // Cards with /total
+  if (extNumber.includes('/')) {
+    const totalPart = extNumber.split('/')[1].replace(/^0+/, '') || '0';
+    const baseCode = PROMO_TOTAL_MAP[totalPart];
+    if (baseCode) return { code: baseCode, isPromoGroup: true };
+    return null;
+  }
+
+  // Rune promos with letter suffix: R01b, R02b
+  const runeMatch = extNumber.match(/^R\d+([a-z]+)$/i);
+  if (runeMatch) {
+    const baseCode = RUNE_SUFFIX_MAP[runeMatch[1].toLowerCase()];
+    if (baseCode) return { code: baseCode, isPromoGroup: true };
+    return null;
+  }
+
+  return null;
+}
+
+// ── FILE HANDLING ─────────────────────────────────────────────────────────────
+function handleTcgcsvFiles(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const zone   = document.getElementById('zone-tcgcsv');
+  const listEl = document.getElementById('list-tcgcsv');
+
+  tcgcsvData      = null;
+  tcgcsvFileCount = 0;
+  tcgcsvRowCount  = 0;
+  listEl.innerHTML = '';
+
+  let loaded = 0;
+  const allRows   = new Array(files.length);
+  const fileNames = new Array(files.length);
+
+  files.forEach((file, idx) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const rows = parseCSV(e.target.result);
+      allRows[idx]   = rows;
+      fileNames[idx] = `✓ ${file.name} (${rows.length} rows)`;
+      loaded++;
+      if (loaded === files.length) {
+        const merged    = allRows.flat();
+        tcgcsvData      = merged;
+        tcgcsvFileCount = files.length;
+        tcgcsvRowCount  = merged.length;
+        zone.classList.add('loaded');
+        listEl.innerHTML = fileNames.map(n => `<span>${n}</span>`).join('');
+        checkReady();
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+
+function handleShopifyFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const zone   = document.getElementById('zone-shopify');
+  const listEl = document.getElementById('list-shopify');
+  const reader = new FileReader();
+  reader.onload = e => {
+    const data = parseCSV(e.target.result);
+    shopifyData = data;
+    zone.classList.add('loaded');
+    listEl.innerHTML = `<span>✓ ${file.name} (${data.length} rows)</span>`;
+    checkReady();
+  };
+  reader.readAsText(file);
+}
+
+// Drag-and-drop wiring
+const tcgZone = document.getElementById('zone-tcgcsv');
+tcgZone.addEventListener('dragover', e => { e.preventDefault(); tcgZone.classList.add('drag-over'); });
+tcgZone.addEventListener('dragleave', () => tcgZone.classList.remove('drag-over'));
+tcgZone.addEventListener('drop', e => {
+  e.preventDefault(); tcgZone.classList.remove('drag-over');
+  const inp = document.getElementById('file-tcgcsv');
+  const dt  = new DataTransfer();
+  Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+  inp.files = dt.files;
+  handleTcgcsvFiles(inp);
+});
+
+const shopifyZone = document.getElementById('zone-shopify');
+shopifyZone.addEventListener('dragover', e => { e.preventDefault(); shopifyZone.classList.add('drag-over'); });
+shopifyZone.addEventListener('dragleave', () => shopifyZone.classList.remove('drag-over'));
+shopifyZone.addEventListener('drop', e => {
+  e.preventDefault(); shopifyZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const inp = document.getElementById('file-shopify');
+  const dt  = new DataTransfer(); dt.items.add(file); inp.files = dt.files;
+  handleShopifyFile(inp);
+});
+
+function checkReady() {
+  document.getElementById('btn-run').disabled = !(tcgcsvData && shopifyData);
+}
+
+// ── TAGS BUILDER (preserves existing tagging exactly) ────────────────────────
+function buildTags(row, setCode, setName, isFoil, extraTags) {
+  const parts = [];
+  if (setName) parts.push(`Set: ${setName}`);
+  parts.push(`Set Code: ${setCode}`);
+  if (row.extRarity) parts.push(`Rarity: ${row.extRarity}`);
+  if (row.extCardType) {
+    row.extCardType.split(';').forEach(ct => { if (ct.trim()) parts.push(`Type: ${ct.trim()}`); });
+  }
+  if (row.extDomain) {
+    row.extDomain.split(';').forEach(d => { if (d.trim()) parts.push(`Domain: ${d.trim()}`); });
+  }
+  if (extraTags) extraTags.forEach(t => parts.push(t));
+  parts.push(isFoil ? 'Foil' : 'Normal');
+  // Ultimate detection — added on top of existing rarity tag
+  if (isUltimate(row.name)) parts.push('Ultimate');
+  return parts.join(', ');
+}
+
+function newProductCsvRow(handle, title, body, vendor, tags, imgSrc, imgAlt, collMeta,
+                           opt1Name, opt1Val, opt2Name, opt2Val, sku, price, isFirst) {
+  return [
+    handle,
+    isFirst ? title : '',
+    isFirst ? body  : '',
+    isFirst ? vendor : '',
+    isFirst ? 'Toys & Games > Games > Card Games' : '',
+    isFirst ? 'Single' : '',
+    isFirst ? tags  : '',
+    isFirst ? 'TRUE' : '',
+    opt1Name, opt1Val, opt2Name, opt2Val,
+    sku, '2', 'shopify', '0', 'deny', 'manual',
+    price != null ? price.toFixed(2) : '0.00',
+    '', 'TRUE', 'TRUE',
+    isFirst ? imgSrc : '',
+    isFirst ? '1'    : '',
+    isFirst ? imgAlt : '',
+    isFirst ? collMeta : '',
+    isFirst ? 'active' : '',
+  ].map(escCSV).join(',') + '\n';
+}
+
+// ── MAIN SYNC ─────────────────────────────────────────────────────────────────
+function runSync() {
+  logLines = [];
+  document.getElementById('results').classList.remove('hidden');
+  document.getElementById('logBox').innerHTML = '';
+
+  const cadRateRaw = cleanNum(document.getElementById('cadRate').value);
+  const cadRate    = (!cadRateRaw || isNaN(cadRateRaw) || cadRateRaw <= 0) ? 1 : cadRateRaw;
+  const thresholdRaw = cleanNum(document.getElementById('notableThreshold').value);
+  const threshold = (!thresholdRaw || isNaN(thresholdRaw) || thresholdRaw <= 0) ? 30 : thresholdRaw;
+  const skipMetals = document.getElementById('skipMetals').checked;
+
+  logAdd('log-info', `Loaded ${tcgcsvRowCount} TCGCSV rows from ${tcgcsvFileCount} file(s)`);
+  logAdd('log-info', `USD → CAD rate: ${cadRate.toFixed(4)} | Notable threshold: ±${threshold}% | Skip Metals: ${skipMetals ? 'on' : 'off'}`);
+
+  // ── INDEX SHOPIFY VARIANTS ──────────────────────────────────────────────────
+  // First pass: build per-Handle metadata (option names, title, image off the
+  // FIRST row of each Handle since Shopify only stores image on the parent row)
+  const handleMeta = {};
+  for (const row of shopifyData) {
+    const handle = row['Handle'] || '';
+    if (!handle) continue;
+    if (!handleMeta[handle]) {
+      handleMeta[handle] = {
+        title:    row['Title']        || '',
+        opt1Name: row['Option1 Name'] || '',
+        opt2Name: row['Option2 Name'] || '',
+        imageSrc: row['Image Src']    || '',
+      };
+    } else {
+      const m = handleMeta[handle];
+      if (!m.title    && row['Title'])         m.title    = row['Title'];
+      if (!m.opt1Name && row['Option1 Name'])  m.opt1Name = row['Option1 Name'];
+      if (!m.opt2Name && row['Option2 Name'])  m.opt2Name = row['Option2 Name'];
+      if (!m.imageSrc && row['Image Src'])     m.imageSrc = row['Image Src'];
+    }
+  }
+
+  // Second pass: build SKU index and tokenId index
+  const shopifyIndex = {};
+  const tokenIndex   = {};
+  let shopifyVariantCount = 0;
+  for (const row of shopifyData) {
+    const handle = row['Handle'] || '';
+    const sku    = row['Variant SKU'] || '';
+    if (!handle || !sku) continue;
+    shopifyVariantCount++;
+    const meta  = handleMeta[handle] || {};
+    const entry = { handle, sku, title: meta.title, opt1Name: meta.opt1Name, opt2Name: meta.opt2Name, imageSrc: meta.imageSrc, row };
+    shopifyIndex[sku] = entry;
+    // Token productId index — matches SKU shape SETCODE-TOKEN-PRODUCTID
+    const tokenMatch = sku.match(/^[A-Z]+-TOKEN-(\d+)$/);
+    if (tokenMatch) tokenIndex[tokenMatch[1]] = entry;
+  }
+  logAdd('log-info', `Indexed ${shopifyVariantCount} Shopify variants`);
+
+  // ── PROCESS TCGCSV ROWS ─────────────────────────────────────────────────────
+  let countUpdated = 0, countWarned = 0, countSkipped = 0;
+  let countNew = 0, countEnriched = 0;
+  let countMetalSkipped = 0;
+  const outputMap   = new Map(); // SKU → entry (O(1) dedup vs old findIndex)
+  const newProducts = [];        // Cards not in Shopify → new product CSV
+  const newProductsSeen = new Set(); // card-identity dedup keys
+  const enrichRows  = [];        // Handles missing image but TCGCSV has one
+  const enrichSeen  = new Set();
+
+  for (const row of tcgcsvData) {
+    const productName = (row['name']        || '').trim();
+    const extNumber   = (row['extNumber']   || '').trim();
+    const extRarity   = (row['extRarity']   || '').trim();
+    const subTypeName = (row['subTypeName'] || '').trim();
+    const productId   = (row['productId']   || '').trim();
+
+    // Skip rows without extNumber (sealed product — Booster Pack, Display, etc.)
+    if (!extNumber) {
+      logAdd('log-skip', `SKIP [sealed/no number] "${productName}"`);
+      countSkipped++; continue;
+    }
+
+    // Skip rows without subTypeName (corrupt — can't determine finish)
+    if (!subTypeName) {
+      logAdd('log-skip', `SKIP [no subTypeName] "${productName}" ${extNumber}`);
+      countSkipped++; continue;
+    }
+
+    // Metals filter (toggle-controlled)
+    if (skipMetals && isMetal(productName)) {
+      countMetalSkipped++;
+      continue;
+    }
+
+    // Resolve set code via groupId
+    const setInfo = resolveSetCode(row);
+    if (!setInfo) {
+      logAdd('log-warn', `WARN [unknown groupId/total] "${productName}" ${extNumber} groupId=${row['groupId']}`);
+      countWarned++; continue;
+    }
+    const setCode = setInfo.code;
+    const fromPromoGroup = setInfo.isPromoGroup;
+
+    // ── CLASSIFY CARD ────────────────────────────────────────────────────────
+    // Determines: target SKU and foil-only-ness for new product generation.
+    // Order matters: token > rune > promo-group > alt-art/overnumber > standard
+    let targetSku = null;
+    let foilOnly  = false;
+    let extraTags = [];
+    let titleSuffix = '';
+    let printing = (subTypeName === 'Foil') ? 'FOIL' : 'NORMAL';
+
+    if (isToken(extNumber)) {
+      // Tokens — match via productId in tokenIndex (no SKU pattern build)
+      // For new tokens, use SETCODE-TOKEN-PRODUCTID convention
+      targetSku = null; // Will fall through to productId match below
+      foilOnly  = subTypeName === 'Foil';
+      extraTags.push('Token');
+    } else if (isRune(extNumber)) {
+      // Runes: R01-R06 are normal-only; R01a/b/etc. are foil-only
+      const hasLetter = /[a-z]$/i.test(extNumber);
+      foilOnly = hasLetter;
+      extraTags.push('Rune');
+      if (fromPromoGroup) {
+        // Promo runes use SETCODE-{R0Xx}-PROMO-FOIL-NMM
+        targetSku = `${setCode}-${extNumber}-PROMO-FOIL-NMM`;
+        extraTags.push('Promo');
+      } else if (hasLetter) {
+        targetSku = `${setCode}-${extNumber}-FOIL-NMM`;
+        if (extNumber.toLowerCase().endsWith('a')) extraTags.push('Alt Art');
+      } else {
+        targetSku = `${setCode}-${extNumber}-NORMAL-NMM`;
+      }
+    } else if (fromPromoGroup) {
+      // Promo cards (non-rune) — always foil-only, use PROMO marker in SKU
+      foilOnly = true;
+      const numPart = skuNum(extNumber);
+      targetSku = `${setCode}-${numPart}-PROMO-FOIL-NMM`;
+      extraTags.push('Promo');
+      if (isAltArt(extNumber)) extraTags.push('Alt Art');
+    } else {
+      // Standard set card — apply alt art / overnumber / signature / rarity logic
+      const numPart = skuNum(extNumber);
+      const altArt    = isAltArt(extNumber);
+      const overNum   = isOvernumber(extNumber);
+      const signature = isSignature(extNumber);
+
+      // OGS exception: regular OGS (Proving Grounds) cards are Normal-only,
+      // even at Rare/Epic rarity. The Rare/Epic foil rule does not apply to
+      // base OGS cards. (OGS promos in OPP/PR groups are still foil-only — they
+      // hit the fromPromoGroup branch above and never reach this block.)
+      const isOgsBase = (setCode === 'OGS');
+      const rarityImpliesFoil = !isOgsBase && FOIL_ONLY_RARITIES.has(extRarity);
+      foilOnly = altArt || overNum || signature || rarityImpliesFoil;
+
+      if (foilOnly) {
+        targetSku = `${setCode}-${numPart}-FOIL-NMM`;
+        if (altArt)    extraTags.push('Alt Art');
+        if (overNum)   extraTags.push('Overnumber');
+        if (signature) extraTags.push('Signature');
+      } else {
+        targetSku = `${setCode}-${numPart}-${printing}-NMM`;
+      }
+    }
+
+    // ── MATCH AGAINST SHOPIFY ───────────────────────────────────────────────
+    let match = targetSku ? shopifyIndex[targetSku] : null;
+    if (!match && productId && tokenIndex[productId]) {
+      match = tokenIndex[productId];
+      logAdd('log-info', `TOKEN   ${productId} → ${match.sku} | "${productName}"`);
+    }
+
+    if (!match) {
+      // No match — collect for new products CSV.
+      // Dedupe by card identity (setCode + extNumber). A Normal+Foil card has
+      // two TCGCSV rows but should produce ONE product shell with 6 variants.
+      // Prefer the row that contains a non-foil-only printing (so non-foil-only
+      // standard cards keep their Normal pricing as the primary shell row).
+      const isNewToken = isToken(extNumber);
+      const shouldAddAsNew = isNewToken || (targetSku && targetSku.endsWith('-NMM'));
+      if (shouldAddAsNew) {
+        const cardKey = isNewToken ? `${setCode}-TOKEN-${productId}` : `${setCode}-${extNumber}`;
+        if (!newProductsSeen.has(cardKey)) {
+          newProductsSeen.add(cardKey);
+          newProducts.push({
+            row, setCode, fromPromoGroup, extNumber, extRarity, subTypeName, printing,
+            productName, foilOnly, extraTags, productId,
+          });
+          logAdd('log-info', `NEW     ${targetSku || `${setCode}-TOKEN-${productId}`} | "${productName}"`);
+          countNew++;
+        }
+      }
+      continue;
+    }
+
+    // ── ENRICHMENT CHECK ────────────────────────────────────────────────────
+    // Look at the per-Handle image (cached from first row), not the variant row's
+    // image (which is blank for non-first variant rows in Shopify exports).
+    const tcgImg = (row['imageUrl'] || '').trim();
+    if (!match.imageSrc && tcgImg && !enrichSeen.has(match.handle)) {
+      enrichRows.push({ handle: match.handle, imgSrc: tcgImg });
+      enrichSeen.add(match.handle);
+      logAdd('log-info', `ENRICH  ${match.handle} | image added`);
+      countEnriched++;
+    }
+
+    // ── PRICE ───────────────────────────────────────────────────────────────
+    const { price, fallback } = getPriceFromTcgcsv(row, cadRate);
+    if (price == null) {
+      logAdd('log-warn', `WARN [no price] ${match.sku} | "${productName}"`);
+      countWarned++; continue;
+    }
+    if (fallback) {
+      logAdd('log-warn', `FLAG [price fallback] ${match.sku} | "${productName}" | ${fallback}`);
+    }
+
+    // Capture old price for change detection
+    const oldPriceRaw = cleanNum(match.row['Variant Price'] || '0');
+    const oldPrice    = isNaN(oldPriceRaw) ? 0 : oldPriceRaw;
+
+    // Dedupe via Map (O(1) — was O(n²) findIndex)
+    if (outputMap.has(match.sku)) {
+      logAdd('log-warn', `DEDUP   ${match.sku} → replaced`);
+    } else {
+      countUpdated++;
+    }
+    outputMap.set(match.sku, {
+      handle: match.handle, sku: match.sku, price, oldPrice, productName, shopifyRow: match.row
+    });
+    logAdd('log-ok', `✓ ${match.sku} @ $${price.toFixed(2)}`);
+  }
+
+  if (countMetalSkipped > 0) {
+    logAdd('log-skip', `Metals filter skipped ${countMetalSkipped} row(s).`);
+  }
+
+  // ── BUILD PRICE CSV ─────────────────────────────────────────────────────────
+  // Includes ALL variants for any touched product — prevents Shopify from
+  // deleting unmentioned variants on overwrite import.
+  const priceMap = {};
+  outputMap.forEach((entry, sku) => { priceMap[sku] = entry.price; });
+  const touchedHandles = new Set();
+  outputMap.forEach(entry => touchedHandles.add(entry.handle));
+
+  const priceHeaders = [
+    'Handle', 'Title',
+    'Option1 Name', 'Option1 Value',
+    'Option2 Name', 'Option2 Value',
+    'Option3 Name', 'Option3 Value',
+    'Variant SKU', 'Variant Price'
+  ];
+  let priceCSV = priceHeaders.map(escCSV).join(',') + '\n';
+
+  for (const row of shopifyData) {
+    const handle = row['Handle'] || '';
+    const sku    = row['Variant SKU'] || '';
+    if (!touchedHandles.has(handle)) continue;
+    const meta  = handleMeta[handle] || {};
+    const price = priceMap[sku];
+    priceCSV += [
+      handle,
+      row['Title'] || '',
+      meta.opt1Name || row['Option1 Name'] || '',
+      row['Option1 Value'] || '',
+      meta.opt2Name || row['Option2 Name'] || '',
+      row['Option2 Value'] || '',
+      row['Option3 Name']  || '',
+      row['Option3 Value'] || '',
+      sku,
+      price != null ? price.toFixed(2) : (row['Variant Price'] || '0.00'),
+    ].map(escCSV).join(',') + '\n';
+  }
+
+  // ── NOTABLE PRICE CHANGES ──────────────────────────────────────────────────
+  const notable = [];
+  outputMap.forEach(r => {
+    if (r.oldPrice > 0) {
+      const pct = ((r.price - r.oldPrice) / r.oldPrice) * 100;
+      if (Math.abs(pct) >= threshold) notable.push({ ...r, pct });
+    }
+  });
+  notable.sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct));
+
+  if (notable.length > 0) {
+    logAdd('log-head', `─── Notable Price Changes (±${threshold}%+): ${notable.length} cards ───`);
+    for (const r of notable) {
+      const dir    = r.pct > 0 ? '▲' : '▼';
+      const cls    = r.pct > 0 ? 'log-warn' : 'log-info';
+      const pctStr = (r.pct > 0 ? '+' : '') + r.pct.toFixed(0) + '%';
+      logAdd(cls, `${dir} ${pctStr.padStart(6)}  $${r.oldPrice.toFixed(2)} → $${r.price.toFixed(2)}  ${r.sku}  "${r.productName}"`);
+    }
+  } else {
+    logAdd('log-info', `─── No price changes of ±${threshold}% or more ───`);
+  }
+
+  // ── BUILD NEW PRODUCTS CSV ─────────────────────────────────────────────────
+  let newProductsCSV = NEW_PRODUCT_HEADERS.join(',') + '\n';
+  const seenNewHandles = {};
+
+  for (const np of newProducts) {
+    const { row, setCode, fromPromoGroup, extNumber, productName, foilOnly, extraTags, productId } = np;
+    const imgSrc = (row['imageUrl'] || '').trim();
+    const body   = row['extDescription'] ? `<p>${row['extDescription'].replace(/<br>/g,'<br/>')}</p>` : '';
+    const vendor = 'Riftbound TCG';
+    const groupInfo = GROUP_MAP[(row['groupId'] || '').trim()];
+    // For promo-group rows, set name comes from the inferred base set's group entry
+    let setName = groupInfo ? groupInfo.name : setCode;
+    if (fromPromoGroup) {
+      // Look up base set's friendly name
+      const baseGroup = Object.values(GROUP_MAP).find(g => g.code === setCode && !g.isPromo);
+      if (baseGroup) setName = baseGroup.name;
+    }
+    const collMeta = `${setCode} - ${setName}`;
+
+    // ── TOKEN ──────────────────────────────────────────────────────────────
+    if (isToken(extNumber)) {
+      const tokenSku = `${setCode}-TOKEN-${productId}`;
+      const title = `${setCode} ${extNumber} - ${productName}`;
+      const tags = buildTags(row, setCode, setName, foilOnly, ['Token']);
+      let handle = toHandle(title);
+      if (seenNewHandles[handle]) handle = `${handle}-${++seenNewHandles[handle]}`;
+      else seenNewHandles[handle] = 1;
+      // Tokens are single-variant in current store: one SKU, no condition variants
+      newProductsCSV += newProductCsvRow(handle, title, body, vendor, tags, imgSrc, title, collMeta,
+        'Title', 'Default Title', '', '', tokenSku, null, true);
+      continue;
+    }
+
+    // ── RUNE ───────────────────────────────────────────────────────────────
+    if (isRune(extNumber)) {
+      const hasLetter = /[a-z]$/i.test(extNumber);
+      let title, tagsBase;
+      if (fromPromoGroup) {
+        title = `(Promo) ${setCode} ${extNumber.toUpperCase()} - ${productName}`;
+        tagsBase = ['Rune', 'Promo'];
+      } else if (hasLetter) {
+        title = `${setCode} ${extNumber.toUpperCase()} - ${productName}`;
+        tagsBase = ['Rune', 'Alt Art'];
+      } else {
+        title = `${setCode} ${extNumber.toUpperCase()} - ${productName}`;
+        tagsBase = ['Rune'];
+      }
+      const tags = buildTags(row, setCode, setName, foilOnly, tagsBase);
+      let handle = toHandle(title);
+      if (seenNewHandles[handle]) handle = `${handle}-${++seenNewHandles[handle]}`;
+      else seenNewHandles[handle] = 1;
+
+      // 3 condition variants
+      let first = true;
+      for (const cond of CONDITIONS) {
+        let sku;
+        if (fromPromoGroup) {
+          sku = `${setCode}-${extNumber}-PROMO-FOIL-${cond.sku}`;
+        } else if (hasLetter) {
+          sku = `${setCode}-${extNumber}-FOIL-${cond.sku}`;
+        } else {
+          sku = `${setCode}-${extNumber}-NORMAL-${cond.sku}`;
+        }
+        newProductsCSV += newProductCsvRow(handle, title, body, vendor, tags, imgSrc, title, collMeta,
+          'Condition', cond.label, '', '', sku, null, first);
+        first = false;
+      }
+      continue;
+    }
+
+    // ── PROMO (non-rune) ───────────────────────────────────────────────────
+    if (fromPromoGroup) {
+      const numPart = skuNum(extNumber);
+      const title = `(Promo) ${setCode} ${extNumber} - ${productName}`;
+      const tags  = buildTags(row, setCode, setName, true, extraTags.length ? extraTags : ['Promo']);
+      let handle  = toHandle(title);
+      if (seenNewHandles[handle]) handle = `${handle}-${++seenNewHandles[handle]}`;
+      else seenNewHandles[handle] = 1;
+
+      let first = true;
+      for (const cond of CONDITIONS) {
+        const sku = `${setCode}-${numPart}-PROMO-FOIL-${cond.sku}`;
+        newProductsCSV += newProductCsvRow(handle, title, body, vendor, tags, imgSrc, title, collMeta,
+          'Condition', cond.label, '', '', sku, null, first);
+        first = false;
+      }
+      continue;
+    }
+
+    // ── STANDARD (foil-only) ───────────────────────────────────────────────
+    const numPart = skuNum(extNumber);
+    if (foilOnly) {
+      const title = `${setCode} ${extNumber} - ${productName}`;
+      const tags  = buildTags(row, setCode, setName, true, extraTags);
+      let handle  = toHandle(title);
+      if (seenNewHandles[handle]) handle = `${handle}-${++seenNewHandles[handle]}`;
+      else seenNewHandles[handle] = 1;
+
+      let first = true;
+      for (const cond of CONDITIONS) {
+        const sku = `${setCode}-${numPart}-FOIL-${cond.sku}`;
+        newProductsCSV += newProductCsvRow(handle, title, body, vendor, tags, imgSrc, title, collMeta,
+          'Condition', cond.label, '', '', sku, null, first);
+        first = false;
+      }
+    } else {
+      // ── STANDARD (Normal + Foil, 2 printings × 3 conditions = 6 variants) ──
+      const title = `${setCode} ${extNumber} - ${productName}`;
+      const normalTags = buildTags(row, setCode, setName, false, extraTags);
+      const foilTags   = buildTags(row, setCode, setName, true,  extraTags);
+      let handle = toHandle(title);
+      if (seenNewHandles[handle]) handle = `${handle}-${++seenNewHandles[handle]}`;
+      else seenNewHandles[handle] = 1;
+
+      let first = true;
+      for (const finish of ['Normal', 'Foil']) {
+        for (const cond of CONDITIONS) {
+          const sku = `${setCode}-${numPart}-${finish.toUpperCase()}-${cond.sku}`;
+          const tags = (finish === 'Foil') ? foilTags : normalTags;
+          newProductsCSV += newProductCsvRow(handle, title, body, vendor, first ? normalTags : tags, imgSrc, title, collMeta,
+            'Printing', finish, 'Condition', cond.label, sku, null, first);
+          first = false;
+        }
+      }
+    }
+  }
+
+  // ── BUILD ENRICHMENT CSV ───────────────────────────────────────────────────
+  const enrichHandleSet = new Set(enrichRows.map(e => e.handle));
+  const enrichImageMap  = {};
+  enrichRows.forEach(e => { enrichImageMap[e.handle] = e.imgSrc; });
+
+  const enrichHeaders = [
+    'Handle', 'Title',
+    'Option1 Name', 'Option1 Value',
+    'Option2 Name', 'Option2 Value',
+    'Option3 Name', 'Option3 Value',
+    'Variant SKU', 'Variant Price',
+    'Image Src', 'Image Position'
+  ];
+  let enrichCSV = enrichHeaders.map(escCSV).join(',') + '\n';
+
+  const enrichSeenHandles = new Set();
+  for (const row of shopifyData) {
+    const handle = row['Handle'] || '';
+    const sku    = row['Variant SKU'] || '';
+    if (!enrichHandleSet.has(handle)) continue;
+    const meta    = handleMeta[handle] || {};
+    const price   = priceMap[sku];
+    const isFirst = !enrichSeenHandles.has(handle);
+    if (isFirst) enrichSeenHandles.add(handle);
+    enrichCSV += [
+      handle,
+      row['Title'] || '',
+      meta.opt1Name || row['Option1 Name'] || '',
+      row['Option1 Value'] || '',
+      meta.opt2Name || row['Option2 Name'] || '',
+      row['Option2 Value'] || '',
+      row['Option3 Name']  || '',
+      row['Option3 Value'] || '',
+      sku,
+      price != null ? price.toFixed(2) : (row['Variant Price'] || '0.00'),
+      isFirst ? (enrichImageMap[handle] || '') : '',
+      isFirst && enrichImageMap[handle] ? '1' : '',
+    ].map(escCSV).join(',') + '\n';
+  }
+
+  // ── UPDATE UI ──────────────────────────────────────────────────────────────
+  document.getElementById('stat-updated').textContent  = countUpdated;
+  document.getElementById('stat-warned').textContent   = countWarned;
+  document.getElementById('stat-skipped').textContent  = countSkipped + countMetalSkipped;
+  document.getElementById('stat-total').textContent    = tcgcsvRowCount;
+  document.getElementById('stat-new').textContent      = countNew;
+  document.getElementById('stat-enriched').textContent = countEnriched;
+
+  const logBox = document.getElementById('logBox');
+  logBox.innerHTML = logLines.join('');
+  logBox.scrollTop = logBox.scrollHeight;
+
+  const date   = new Date().toISOString().slice(0, 10);
+  const dlArea = document.getElementById('download-area');
+  let dlHTML   = '<div class="download-grid">';
+
+  if (countUpdated > 0) {
+    const priceBlob = new Blob([priceCSV], { type: 'text/csv' });
+    const priceUrl  = URL.createObjectURL(priceBlob);
+    dlHTML += `<a class="btn-download price" href="${priceUrl}" download="price-update-${date}.csv">
+      ⬇ Price CSV &nbsp;·&nbsp; ${countUpdated} variants &middot; ${touchedHandles.size} products
+    </a>`;
+  } else {
+    dlHTML += `<div style="color:var(--warning);padding:12px;font-size:13px;">No price matches — verify groupIds and Shopify SKU formats.</div>`;
+  }
+
+  if (countNew > 0) {
+    const newBlob = new Blob([newProductsCSV], { type: 'text/csv' });
+    const newUrl  = URL.createObjectURL(newBlob);
+    dlHTML += `<a class="btn-download new-products" href="${newUrl}" download="new-products-${date}.csv">
+      ⬇ New Products CSV &nbsp;·&nbsp; ${countNew} new listings
+    </a>`;
+  }
+
+  if (countEnriched > 0) {
+    const enrichBlob = new Blob([enrichCSV], { type: 'text/csv' });
+    const enrichUrl  = URL.createObjectURL(enrichBlob);
+    dlHTML += `<a class="btn-download enrichment" href="${enrichUrl}" download="image-enrichment-${date}.csv">
+      ⬇ Image Enrichment CSV &nbsp;·&nbsp; ${countEnriched} products
+    </a>`;
+  }
+
+  dlHTML += '</div>';
+
+  // Build download instructions, only including sections that actually exist
+  let stepNum = 1;
+  let instructions = '';
+  if (countUpdated > 0) {
+    instructions += `<strong>${stepNum++}. Price CSV</strong>Admin → Products → Import → <em>Overwrite existing products: ON</em>. Updates prices only.`;
+  }
+  if (countEnriched > 0) {
+    instructions += `<strong style="margin-top:8px;">${stepNum++}. Image Enrichment CSV</strong>Admin → Products → Import → <em>Overwrite existing products: ON</em>. Adds missing images only.`;
+  }
+  if (countNew > 0) {
+    instructions += `<strong style="margin-top:8px;">${stepNum++}. New Products CSV</strong>Admin → Products → Import → <em>Overwrite existing products: OFF</em>. Review before importing — creates new listings only.`;
+  }
+  if (instructions) {
+    dlHTML += `<div class="download-instructions">${instructions}</div>`;
+  }
+
+  dlArea.innerHTML = dlHTML;
+}
+</script>
+</body>
+</html>
