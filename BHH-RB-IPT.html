@@ -314,8 +314,9 @@ function isRune(extNumber) {
 }
 
 function isToken(extNumber) {
-  // Any number of digits after T: T01, T02 ... T99, T100 if it ever happens
-  return /^T\d+$/i.test(extNumber || '');
+  // Single tokens (T01, T02 ...) AND double-faced tokens ("T06 // T04", introduced
+  // in Unleashed). Both match and generate by productId, so we just need detection.
+  return /^T\d+(\s*\/\/\s*T\d+)?$/i.test(extNumber || '');
 }
 
 function isUltimate(name) {
@@ -632,6 +633,10 @@ function runSync() {
     }
     const setCode = setInfo.code;
     const fromPromoGroup = setInfo.isPromoGroup;
+    // FIX (promo): a row is a promo if it came from a promo group OR its rarity is
+    // Promo. TCGCSV now files some promos (e.g. R0Xb GG EZ runes) into base-set
+    // files like SFD/UNL tagged extRarity=Promo, so group alone is no longer enough.
+    const isPromoRow = fromPromoGroup || (extRarity === 'Promo');
 
     // ── CLASSIFY CARD ────────────────────────────────────────────────────────
     // Determines: target SKU and foil-only-ness for new product generation.
@@ -653,7 +658,7 @@ function runSync() {
       const hasLetter = /[a-z]$/i.test(extNumber);
       foilOnly = hasLetter;
       extraTags.push('Rune');
-      if (fromPromoGroup) {
+      if (isPromoRow) {
         // Promo runes use SETCODE-{R0Xx}-PROMO-FOIL-NMM
         targetSku = `${setCode}-${extNumber}-PROMO-FOIL-NMM`;
         extraTags.push('Promo');
@@ -663,7 +668,7 @@ function runSync() {
       } else {
         targetSku = `${setCode}-${extNumber}-NORMAL-NMM`;
       }
-    } else if (fromPromoGroup) {
+    } else if (isPromoRow) {
       // Promo cards (non-rune) — always foil-only, use PROMO marker in SKU
       foilOnly = true;
       const numPart = skuNum(extNumber);
@@ -830,7 +835,8 @@ function runSync() {
   const seenNewHandles = {};
 
   for (const np of newProducts) {
-    const { row, setCode, fromPromoGroup, extNumber, productName, foilOnly, extraTags, productId } = np;
+    const { row, setCode, fromPromoGroup, extNumber, extRarity, productName, foilOnly, extraTags, productId } = np;
+    const isPromoRow = fromPromoGroup || (extRarity === 'Promo');  // FIX (promo): mirror classification
     const imgSrc = (row['imageUrl'] || '').trim();
     const body   = row['extDescription'] ? `<p>${row['extDescription'].replace(/<br>/g,'<br/>')}</p>` : '';
     const vendor = 'Riftbound TCG';
@@ -862,7 +868,7 @@ function runSync() {
     if (isRune(extNumber)) {
       const hasLetter = /[a-z]$/i.test(extNumber);
       let title, tagsBase;
-      if (fromPromoGroup) {
+      if (isPromoRow) {
         title = `(Promo) ${setCode} ${extNumber.toUpperCase()} - ${productName}`;
         tagsBase = ['Rune', 'Promo'];
       } else if (hasLetter) {
@@ -881,7 +887,7 @@ function runSync() {
       let first = true;
       for (const cond of CONDITIONS) {
         let sku;
-        if (fromPromoGroup) {
+        if (isPromoRow) {
           sku = `${setCode}-${extNumber}-PROMO-FOIL-${cond.sku}`;
         } else if (hasLetter) {
           sku = `${setCode}-${extNumber}-FOIL-${cond.sku}`;
@@ -896,7 +902,7 @@ function runSync() {
     }
 
     // ── PROMO (non-rune) ───────────────────────────────────────────────────
-    if (fromPromoGroup) {
+    if (isPromoRow) {
       const numPart = skuNum(extNumber);
       const title = `(Promo) ${setCode} ${extNumber} - ${productName}`;
       const tags  = buildTags(row, setCode, setName, true, extraTags.length ? extraTags : ['Promo']);
